@@ -1,0 +1,322 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "tf-build",
+        "annotations": {
+            "description": "tf-build",
+            "tags": "tf-app"
+        }
+    },
+    "objects": [
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}-s2i",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "latest",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "submod/tensorflow-build:latest"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${SOURCE_REPOSITORY}"
+                    }
+                },
+                "strategy": {
+                    "type": "Source",
+                    "sourceStrategy": {
+                        "from": {
+                            "kind": "ImageStreamTag",
+                            "name": "${APPLICATION_NAME}-s2i:latest"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}:latest"
+                    }
+                }
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Rolling"
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "selector": {
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                },
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "appid": "tf-build-${APPLICATION_NAME}",
+                            "deploymentconfig": "${APPLICATION_NAME}",
+                            "appName": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "env": [
+                                    {
+                                        "name": "PORT",
+                                        "value": "${PORT}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_JEMALLOC",
+                                        "value": "${TF_NEED_JEMALLOC}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_GCP",
+                                        "value": "${TF_NEED_GCP}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_VERBS",
+                                        "value": "${TF_NEED_VERBS}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_HDFS",
+                                        "value": "${TF_NEED_HDFS}"
+                                    },
+                                    {
+                                        "name": "TF_ENABLE_XLA",
+                                        "value": "${TF_ENABLE_XLA}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_OPENCL",
+                                        "value": "${TF_NEED_OPENCL}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_CUDA",
+                                        "value": "${TF_NEED_CUDA}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_MPI",
+                                        "value": "${TF_NEED_MPI}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_GDR",
+                                        "value": "${TF_NEED_GDR}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_S3",
+                                        "value": "${TF_NEED_S3}"
+                                    }
+
+                                ],
+                                "name": "${APPLICATION_NAME}",
+                                "image": "${APPLICATION_NAME}:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ],
+                "selector": {
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "host": "",
+                "to": {
+                    "kind": "Service",
+                    "name": "${APPLICATION_NAME}",
+                    "weight": 100
+                },
+                "port": {
+                    "targetPort": "8080-tcp"
+                }
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APPLICATION_NAME",
+            "description": "The name of the application.",
+            "value": "tf-build",
+            "from": "[a-zA-Z0-9]{10}",
+            "required": true
+        },
+        {
+            "name": "SOURCE_REPOSITORY",
+            "description": "Git repository for source.",
+            "value": "https://github.com/sub-mod/empty-repo.git",
+            "required": true
+        },
+        {
+            "name": "PORT",
+            "description": "port",
+            "value": "8080",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_JEMALLOC",
+            "description": "TF_NEED_JEMALLOC",
+            "value": "1",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_GCP",
+            "description": "TF_NEED_GCP",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_VERBS",
+            "description": "TF_NEED_VERBS",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_HDFS",
+            "description": "TF_NEED_HDFS",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_ENABLE_XLA",
+            "description": "TF_ENABLE_XLA",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_OPENCL",
+            "description": "TF_NEED_OPENCL",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_CUDA",
+            "description": "TF_NEED_CUDA",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_MPI",
+            "description": "TF_NEED_MPI",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_GDR",
+            "description": "TF_NEED_GDR",
+            "value": "0",
+            "required": false
+        },
+        {
+            "name": "TF_NEED_S3",
+            "description": "TF_NEED_S3",
+            "value": "0",
+            "required": false
+        }
+    ]
+}

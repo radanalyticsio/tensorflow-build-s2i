@@ -1,0 +1,62 @@
+#!/bin/bash -e
+#
+# S2I run script for the 's2i' image.
+# The run script executes the server that runs your application.
+#
+# For more information see the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
+
+echo "PORT = "$PORT
+echo "TF_NEED_JEMALLOC = "$TF_NEED_JEMALLOC
+echo "TF_NEED_GCP = "$TF_NEED_GCP
+echo "TF_NEED_VERBS = "$TF_NEED_VERBS
+echo "TF_NEED_HDFS = "$TF_NEED_HDFS
+echo "TF_ENABLE_XLA = "$TF_ENABLE_XLA
+echo "TF_NEED_OPENCL = "$TF_NEED_OPENCL
+echo "TF_NEED_CUDA = "$TF_NEED_CUDA
+echo "TF_NEED_MPI = "$TF_NEED_MPI
+echo "TF_NEED_GDR = "$TF_NEED_GDR
+echo "TF_NEED_S3 = "$TF_NEED_S3
+
+
+cd /workspace
+
+# Setup Bazel
+command_exists () { type "$1" &> /dev/null ; }
+if command_exists bazel ; then echo "exists"; else echo "doesnt exists" && cd /tf/tools/ && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && export PATH=$HOME/bin:$PATH && bazel ; fi
+
+# git clone tf
+cd /workspace
+git clone --recurse-submodules https://github.com/tensorflow/serving
+cd /workspace/serving 
+cd /workspace/serving/tensorflow 
+./configure
+cd /workspace/serving/tensorflow
+
+#BUILD
+export PATH=$HOME/bin:$PATH
+bazel build -c opt --verbose_failures //tensorflow/tools/pip_package:build_pip_package > /workspace/ERROR.txt 2>&1
+
+
+if (( $? )); then
+    echo "######################\n"
+	echo "      BUILD  ERROR     \n"
+	echo "######################\n"
+	mkdir -p /workspace/bins
+	mv /workspace/ERROR.txt /workspace/bins/
+else
+    echo "######################\n"
+	echo "      BUILD  SUCCESS     \n"
+	echo "######################\n"
+	ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package && bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
+
+fi
+
+
+cd /workspace/bins
+python -m SimpleHTTPServer $PORT 
+
+
+
+

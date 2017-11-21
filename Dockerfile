@@ -1,20 +1,30 @@
-# base image for tensorflow
-FROM centos:latest
+
+FROM openshift/base-centos7
 
 MAINTAINER Subin Modeel <smodeel@redhat.com>
 
 USER root
+
+ENV BUILDER_VERSION 1.0
+
+LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
+      io.k8s.display-name="Tensorflow BUILD" \
+      io.openshift.expose-services="8080:http" \
+      io.openshift.tags="builder,python,tf-build" \
+      io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
+
 
 ## taken/adapted from jupyter dockerfiles
 # Not essential, but wise to set the lang
 # Note: Users with other languages should set this in their derivative image
 ENV LANGUAGE en_US.UTF-8
 ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
+ENV LC_ALL=""
 ENV PYTHONIOENCODING UTF-8
-ENV NB_USER=nbuser
-ENV NB_UID=1011
+ENV NB_USER=default
+ENV NB_UID=1001
 ENV NB_PYTHON_VER=2.7
+ENV PYTHON_BIN_PATH=/usr/bin/python 
 ENV TINI_VERSION=v0.16.1 
 
 ## Bazel
@@ -23,8 +33,10 @@ ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
 ENV BAZEL_VERSION 0.5.4
 ENV CURL_VERSION 7.54.1
-
-## tensorflow ./configure options for Bazel
+################################################
+## Tensorflow ./configure options for Bazel
+################################################
+ENV PYTHON_BIN_PATH=/usr/bin/python
 ENV CC_OPT_FLAGS -march=native
 ENV TF_NEED_JEMALLOC 1
 ENV TF_NEED_GCP 0
@@ -64,18 +76,14 @@ ENV TENSORFLOW_BUILD_FILES /root/.cache/bazel/_bazel_root/*/execroot/serving/baz
 
 
 
-LABEL io.k8s.description="Tensorflow Builder." \
-      io.k8s.display-name="Tensorflow Builder Image" \
-      io.openshift.expose-services="6006:http"
-
 ADD entrypoint /entrypoint
+COPY ./s2i/bin/ /usr/libexec/s2i
 
 
-# Python binary and source dependencies and Development tools
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
     && yum install -y epel-release \
-    && yum install -y tar git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip \
+    && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip protobuf-compiler \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
@@ -90,6 +98,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 0527A9B7 && gpg --verify /tmp/tini.asc \
     && mv /tmp/tini /usr/local/bin/tini \
     && chmod +x /usr/local/bin/tini \
+    && chown -R 1001:1001 /opt/app-root \
+    && chgrp -R root /opt/app-root \
+    && chmod -R ug+rwx /opt/app-root \
     && echo "startup --batch" >>/root/.bazelrc \
     && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/root/.bazelrc
 
@@ -113,7 +124,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 # removed python to fix numpy issue
 RUN mkdir -p /tf \
     && pip install --upgrade pip \
-    && pip install enum34 futures mock six pixiedust \
+    && pip install enum34 futures mock six pixiedust pillow \
     && pip install 'protobuf>=3.0.0a3' \
     && pip install -i https://testpypi.python.org/simple --pre grpcio \
     && pip install grpcio_tools mock tensorflow-serving-api \
@@ -152,11 +163,11 @@ RUN mkdir -p /tf \
     && rm -rf /root/.local \
     && rm -rf /root/tmp \
     && rm -f /tf/tools/curl-$CURL_VERSION.tar.bz2 \
-    && useradd -m -s /bin/bash -N -u $NB_UID $NB_USER \
     && usermod -g root $NB_USER \
-    && mkdir -p /notebooks \
-    && chown $NB_UID:root /notebooks \
-    && chmod 1777 /notebooks \
+    && mkdir -p /workspace \
+    && chown $NB_UID:root /workspace \
+    && chmod 1777 /workspace \
+    && mkdir -p /home/$NB_USER \
     && chown -R $NB_UID:root /home/$NB_USER \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
@@ -170,16 +181,20 @@ RUN mkdir -p /tf \
 
 # TensorBoard
 EXPOSE 6006
-
+EXPOSE 8080
 
 ENV HOME /home/$NB_USER
-USER $NB_UID
+# This default user is created in the openshift/base-centos7 image
+USER 1001
 # Make the default PWD somewhere that the user can write. This is
 # useful when connecting with 'oc run' and starting a 'spark-shell',
 # which will likely try to create files and directories in PWD and
 # error out if it cannot.
-WORKDIR /notebooks
+
+WORKDIR /workspace
 
 ENTRYPOINT ["/entrypoint"]
 
-CMD ["/bin/bash"]
+# TODO: Set the default CMD for the image
+CMD ["/usr/libexec/s2i/usage"]
+
