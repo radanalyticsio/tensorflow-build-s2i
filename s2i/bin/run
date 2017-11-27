@@ -18,6 +18,11 @@ echo "TF_NEED_CUDA = "$TF_NEED_CUDA
 echo "TF_NEED_MPI = "$TF_NEED_MPI
 echo "TF_NEED_GDR = "$TF_NEED_GDR
 echo "TF_NEED_S3 = "$TF_NEED_S3
+echo "CUSTOM_BUILD = "$CUSTOM_BUILD
+echo "BUILD_OPTS = "$BUILD_OPTS
+echo "TF_CUDA_VERSION = "$TF_CUDA_VERSION
+echo "TF_CUDA_COMPUTE_CAPABILITIES = "$TF_CUDA_COMPUTE_CAPABILITIES
+echo "TF_CUDNN_VERSION = "$TF_CUDNN_VERSION
 
 
 cd /workspace
@@ -36,7 +41,18 @@ cd /workspace/serving/tensorflow
 
 #BUILD
 export PATH=$HOME/bin:$PATH
-bazel build -c opt --verbose_failures //tensorflow/tools/pip_package:build_pip_package > /workspace/ERROR.txt 2>&1
+
+if [ -z "$CUSTOM_BUILD" ]; then
+	echo "######################\n"
+	echo "      DEFAULT BUILD       \n"
+	echo "######################\n"
+	bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package > /workspace/ERROR.txt 2>&1
+else
+	echo "######################\n"
+	echo "      CUSTOM  BUILD     \n"
+	echo "######################\n"
+	eval "$CUSTOM_BUILD"
+fi
 
 
 if (( $? )); then

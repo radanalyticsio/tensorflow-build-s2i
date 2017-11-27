@@ -137,6 +137,26 @@
                                         "value": "${PORT}"
                                     },
                                     {
+                                        "name": "CUSTOM_BUILD",
+                                        "value": "${CUSTOM_BUILD}"
+                                    },
+                                    {
+                                        "name": "BUILD_OPTS",
+                                        "value": "${BUILD_OPTS}"
+                                    },
+                                    {
+                                        "name": "TF_CUDA_VERSION",
+                                        "value": "${TF_CUDA_VERSION}"
+                                    },
+                                    {
+                                        "name": "TF_CUDA_COMPUTE_CAPABILITIES",
+                                        "value": "${TF_CUDA_COMPUTE_CAPABILITIES}"
+                                    },
+                                    {
+                                        "name": "TF_CUDNN_VERSION",
+                                        "value": "${TF_CUDNN_VERSION}"
+                                    },
+                                    {
                                         "name": "TF_NEED_JEMALLOC",
                                         "value": "${TF_NEED_JEMALLOC}"
                                     },
@@ -256,67 +276,97 @@
             "name": "PORT",
             "description": "port",
             "value": "8080",
+            "required": true
+        },
+        {
+            "name": "CUSTOM_BUILD",
+            "description": "Set to custom BUILD command",
+            "value": "",
             "required": false
         },
+        {
+            "name": "BUILD_OPTS",
+            "description": "Custom options to bazel BUILD command",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "TF_CUDA_VERSION",
+            "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "TF_CUDA_COMPUTE_CAPABILITIES",
+            "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "TF_CUDNN_VERSION",
+            "description": "TF_CUDNN_VERSION depends on TF_NEED_CUDA",
+            "value": "",
+            "required": false
+        },        
         {
             "name": "TF_NEED_JEMALLOC",
             "description": "TF_NEED_JEMALLOC",
             "value": "1",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_GCP",
             "description": "TF_NEED_GCP",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_VERBS",
             "description": "TF_NEED_VERBS",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_HDFS",
             "description": "TF_NEED_HDFS",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_ENABLE_XLA",
             "description": "TF_ENABLE_XLA",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_OPENCL",
             "description": "TF_NEED_OPENCL",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_CUDA",
             "description": "TF_NEED_CUDA",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_MPI",
             "description": "TF_NEED_MPI",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_GDR",
             "description": "TF_NEED_GDR",
             "value": "0",
-            "required": false
+            "required": true
         },
         {
             "name": "TF_NEED_S3",
             "description": "TF_NEED_S3",
             "value": "0",
-            "required": false
+            "required": true
         }
     ]
 }

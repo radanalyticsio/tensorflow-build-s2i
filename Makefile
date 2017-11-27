@@ -1,5 +1,5 @@
 
-IMAGE_NAME = submod/tensorflow-build
+IMAGE_NAME = submod/tensorflow-build-s2i
 
 .PHONY: build
 build:
