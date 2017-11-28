@@ -299,21 +299,51 @@
         {
             "name": "TF_CUDA_VERSION",
             "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
-            "value": "",
-            "required": false
+            "value": "9.0",
+            "required": true
         },
         {
             "name": "TF_CUDA_COMPUTE_CAPABILITIES",
             "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
-            "value": "",
-            "required": false
+            "value": "3.0,3.5,5.2,6.0,6.1",
+            "required": true
         },
         {
             "name": "TF_CUDNN_VERSION",
             "description": "TF_CUDNN_VERSION depends on TF_NEED_CUDA",
-            "value": "",
-            "required": false
+            "value": "7",
+            "required": true
+        },
+        {
+            "name": "CUDA_TOOLKIT_PATH",
+            "description": "CUDA_TOOLKIT_PATH depends on TF_NEED_CUDA",
+            "value": "/usr/local/cuda",
+            "required": true
+        },
+        {
+            "name": "CUDNN_INSTALL_PATH",
+            "description": "CUDNN_INSTALL_PATH depends on TF_NEED_CUDA",
+            "value": "/usr/local/cuda",
+            "required": true
+        },
+        {
+            "name": "GCC_HOST_COMPILER_PATH",
+            "description": "GCC_HOST_COMPILER_PATH depends on TF_NEED_CUDA",
+            "value": "/usr/bin/gcc",
+            "required": true
         },        
+        {
+            "name": "TF_NEED_OPENCL_SYCL",
+            "description": "TF_NEED_OPENCL_SYCL",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_CUDA_CLANG",
+            "description": "TF_CUDA_CLANG",
+            "value": "0",
+            "required": true
+        },
         {
             "name": "TF_NEED_JEMALLOC",
             "description": "TF_NEED_JEMALLOC",

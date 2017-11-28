@@ -77,7 +77,10 @@ ENV TENSORFLOW_BUILD_FILES /root/.cache/bazel/_bazel_root/*/execroot/serving/baz
 
 
 ADD entrypoint /entrypoint
+<<<<<<< Updated upstream
 #COPY ./s2i/bin/ /usr/libexec/s2i
+=======
+>>>>>>> Stashed changes
 
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
