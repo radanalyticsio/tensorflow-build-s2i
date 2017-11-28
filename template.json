@@ -36,7 +36,7 @@
                         "name": "latest",
                         "from": {
                             "kind": "DockerImage",
-                            "name": "submod/tensorflow-build:latest"
+                            "name": "${S2I_IMAGE}"
                         }
                     }
                 ]
@@ -276,6 +276,12 @@
             "name": "PORT",
             "description": "port",
             "value": "8080",
+            "required": true
+        },
+        {
+            "name": "S2I_IMAGE",
+            "description": "S2I_IMAGE",
+            "value": "submod/tensorflow-build-s2i:1",
             "required": true
         },
         {
