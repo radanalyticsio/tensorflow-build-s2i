@@ -17,7 +17,7 @@ set -eo pipefail
 
 # Copy injected files to correct place in 'work' directory.
 
-rm -fr /opt/app-root/src/*
-mv /tmp/src/*  /opt/app-root/src/
+#rm -fr /opt/app-root/src/*
+#mv /tmp/src/*  /opt/app-root/src/
 
 

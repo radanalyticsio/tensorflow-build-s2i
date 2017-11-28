@@ -108,6 +108,7 @@ COPY ./s2i/bin/ /usr/libexec/s2i
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
+    && useradd -m -d /home/default default \
     && yum install -y epel-release \
     && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip protobuf-compiler \
     && yum install dkms -y \
