@@ -77,7 +77,7 @@ ENV TENSORFLOW_BUILD_FILES /root/.cache/bazel/_bazel_root/*/execroot/serving/baz
 
 
 ADD entrypoint /entrypoint
-COPY ./s2i/bin/ /usr/libexec/s2i
+#COPY ./s2i/bin/ /usr/libexec/s2i
 
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
@@ -171,7 +171,7 @@ RUN mkdir -p /tf \
     && chown -R $NB_UID:root /home/$NB_USER \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
-
+COPY ./s2i/bin/ /usr/libexec/s2i
 
 # NO CLEANUP
 # Donot add below commands

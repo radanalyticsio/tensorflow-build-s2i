@@ -18,18 +18,25 @@ echo "TF_NEED_CUDA = "$TF_NEED_CUDA
 echo "TF_NEED_MPI = "$TF_NEED_MPI
 echo "TF_NEED_GDR = "$TF_NEED_GDR
 echo "TF_NEED_S3 = "$TF_NEED_S3
-echo "CUSTOM_BUILD = "$CUSTOM_BUILD
-echo "BUILD_OPTS = "$BUILD_OPTS
 echo "TF_CUDA_VERSION = "$TF_CUDA_VERSION
 echo "TF_CUDA_COMPUTE_CAPABILITIES = "$TF_CUDA_COMPUTE_CAPABILITIES
 echo "TF_CUDNN_VERSION = "$TF_CUDNN_VERSION
-
+echo "TF_NEED_OPENCL_SYCL= "$TF_NEED_OPENCL_SYCL
+echo "TF_CUDA_CLANG= "$TF_CUDA_CLANG
+echo "GCC_HOST_COMPILER_PATH= "$GCC_HOST_COMPILER_PATH
+echo "CUDA_TOOLKIT_PATH= "$CUDA_TOOLKIT_PATH
+echo "CUDNN_INSTALL_PATH= "$CUDNN_INSTALL_PATH
+echo "CUSTOM_BUILD = "$CUSTOM_BUILD
+echo "BUILD_OPTS = "$BUILD_OPTS
 
 cd /workspace
 
 # Setup Bazel
 command_exists () { type "$1" &> /dev/null ; }
-if command_exists bazel ; then echo "exists"; else echo "doesnt exists" && cd /tf/tools/ && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && export PATH=$HOME/bin:$PATH && bazel ; fi
+if command_exists bazel ; then 
+	echo "exists"; 
+else echo "doesnt exists" && cd /tf/tools/ && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && export PATH=$HOME/bin:$PATH && bazel ; 
+fi
 
 # git clone tf
 cd /workspace
@@ -42,19 +49,64 @@ cd /workspace/serving/tensorflow
 #BUILD
 export PATH=$HOME/bin:$PATH
 
-if [ -z "$CUSTOM_BUILD" ]; then
+
+echo "TF_NEED_CUDA = "$TF_NEED_CUDA
+if [ $TF_NEED_CUDA = "1" ]; then 
 	echo "######################\n"
-	echo "      DEFAULT BUILD       \n"
+	echo "      set cuda       \n"
 	echo "######################\n"
-	bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package > /workspace/ERROR.txt 2>&1
-else
-	echo "######################\n"
-	echo "      CUSTOM  BUILD     \n"
-	echo "######################\n"
-	eval "$CUSTOM_BUILD"
-fi
+	sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
+fi 
 
 
+
+# if ! some_command;  then
+#     echo command returned true
+# else
+#     echo command returned some error
+# fi
+
+#bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
+
+# if [ -z "$CUSTOM_BUILD" ]; then
+# 	bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
+# 	if (( $? )); then
+# 	    echo "######################\n"
+# 		echo "      BUILD  ERROR     \n"
+# 		echo "######################\n"
+# 		mkdir -p /workspace/bins
+# 		mv /workspace/ERROR.txt /workspace/bins/
+# 	else
+# 	    echo "######################\n"
+# 		echo "      BUILD  SUCCESS     \n"
+# 		echo "######################\n"
+# 		ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package && bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
+# 	fi
+# else
+# 	echo "######################\n"
+# 	echo "      CUSTOM  BUILD     \n"
+# 	echo "######################\n"
+# 	eval "$CUSTOM_BUILD" | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
+# 	if (( $? )); then
+# 	    echo "######################\n"
+# 		echo "      BUILD  ERROR     \n"
+# 		echo "######################\n"
+# 		mkdir -p /workspace/bins
+# 		mv /workspace/ERROR.txt /workspace/bins/
+# fi
+
+
+# while :
+# do
+# 	echo "Press [CTRL+C] to stop.."
+# 	sleep 1
+# done
+
+
+echo "######################\n"
+echo "      CUSTOM  BUILD     \n"
+echo "######################\n"
+eval "$CUSTOM_BUILD" | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
     echo "######################\n"
 	echo "      BUILD  ERROR     \n"
@@ -62,16 +114,16 @@ if (( $? )); then
 	mkdir -p /workspace/bins
 	mv /workspace/ERROR.txt /workspace/bins/
 else
-    echo "######################\n"
+	echo "######################\n"
 	echo "      BUILD  SUCCESS     \n"
 	echo "######################\n"
 	ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package && bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
-
 fi
 
 
-cd /workspace/bins
+cd /workspace/
 python -m SimpleHTTPServer $PORT 
+
 
 
 
