@@ -58,11 +58,8 @@ if [ $TF_NEED_CUDA = "1" ]; then
 	sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
 fi 
 
-<<<<<<< Updated upstream
-
-=======
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
->>>>>>> Stashed changes
+
 
 # if ! some_command;  then
 #     echo command returned true

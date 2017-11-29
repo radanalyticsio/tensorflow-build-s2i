@@ -77,10 +77,6 @@ ENV TENSORFLOW_BUILD_FILES /root/.cache/bazel/_bazel_root/*/execroot/serving/baz
 
 
 ADD entrypoint /entrypoint
-<<<<<<< Updated upstream
-#COPY ./s2i/bin/ /usr/libexec/s2i
-=======
->>>>>>> Stashed changes
 
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
@@ -127,6 +123,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 # removed python to fix numpy issue
 RUN mkdir -p /tf \
     && pip install --upgrade pip \
+    && pip install -U setuptools \
     && pip install enum34 futures mock six pixiedust pillow \
     && pip install 'protobuf>=3.0.0a3' \
     && pip install -i https://testpypi.python.org/simple --pre grpcio \
