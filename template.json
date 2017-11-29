@@ -157,6 +157,26 @@
                                         "value": "${TF_CUDNN_VERSION}"
                                     },
                                     {
+                                        "name": "TF_NEED_OPENCL_SYCL",
+                                        "value": "${TF_NEED_OPENCL_SYCL}"
+                                    },
+                                    {
+                                        "name": "TF_CUDA_CLANG",
+                                        "value": "${TF_CUDA_CLANG}"
+                                    },
+                                    {
+                                        "name": "GCC_HOST_COMPILER_PATH",
+                                        "value": "${GCC_HOST_COMPILER_PATH}"
+                                    },
+                                    {
+                                        "name": "CUDA_TOOLKIT_PATH",
+                                        "value": "${CUDA_TOOLKIT_PATH}"
+                                    },
+                                    {
+                                        "name": "CUDNN_INSTALL_PATH",
+                                        "value": "${CUDNN_INSTALL_PATH}"
+                                    },
+                                    {
                                         "name": "TF_NEED_JEMALLOC",
                                         "value": "${TF_NEED_JEMALLOC}"
                                     },
@@ -406,3 +426,4 @@
         }
     ]
 }
+

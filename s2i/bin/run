@@ -55,19 +55,14 @@ if [ $TF_NEED_CUDA = "1" ]; then
 	echo "######################\n"
 	echo "      set cuda       \n"
 	echo "######################\n"
+	cd /workspace/serving/tensorflow
+	sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
+	cd /workspace/serving/
 	sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
 fi 
 
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-
-
-# if ! some_command;  then
-#     echo command returned true
-# else
-#     echo command returned some error
-# fi
-
-#bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
+#bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
 
 # if [ -z "$CUSTOM_BUILD" ]; then
 # 	bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
@@ -118,7 +113,9 @@ else
 	echo "######################\n"
 	echo "      BUILD  SUCCESS     \n"
 	echo "######################\n"
-	ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package && bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
+	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
+		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
+	fi
 fi
 
 

@@ -47,7 +47,8 @@ oc new-app --template tf-build \
 
 To create with tf binary for GPU :
 ```
-oc new-app --template tf-build --param=TF_NEED_CUDA=1 \
-	--param="CUSTOM_BUILD=bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package"
+oc new-app --template tf-build \
+	 --param="CUSTOM_BUILD=cd /workspace/serving && bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server" \
+	 --param="TF_NEED_CUDA=1" 
 ```
 
