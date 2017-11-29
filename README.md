@@ -34,7 +34,7 @@ Larger values of `WIDTH` and `ITERATIONS` will increase the quality of the outpu
 
 ## Usage
 ```
-oc create template -f \
+oc create -f \
 https://raw.githubusercontent.com/sub-mod/tensorflow-build-s2i/master/template.json
 ```
 
