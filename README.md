@@ -2,10 +2,12 @@
 
 ## About
 
-This S2I image is meant for 
+This S2I image is meant for building tensorflow binaries
 
 Building Tensorflow from source on Linux can give better performance:
-Tensorflow has many  
+
+`--copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 `
+ will build the package with optimizations for FMA, AVX and SSE
 
 ## Bazel build options
 * `TF_NEED_JEMALLOC`: = 1
@@ -39,13 +41,13 @@ https://raw.githubusercontent.com/sub-mod/tensorflow-build-s2i/master/template.j
 
 To create with tf binary for CPU :
 ```
-oc new-app --template tf-build --param=TF_NEED_CUDA=0 \
-	--param=CUSTOM_BUILD=bazel build -c opt  --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+oc new-app --template tf-build \
+	--param="CUSTOM_BUILD=bazel build -c opt  --verbose_failures //tensorflow/tools/pip_package:build_pip_package"
 ```
 
 To create with tf binary for GPU :
 ```
 oc new-app --template tf-build --param=TF_NEED_CUDA=1 \
-	--param=CUSTOM_BUILD=bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+	--param="CUSTOM_BUILD=bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package"
 ```
 
