@@ -281,7 +281,7 @@
         {
             "name": "S2I_IMAGE",
             "description": "S2I_IMAGE",
-            "value": "submod/tensorflow-build-s2i:1",
+            "value": "submod/tensorflow-build-s2i:latest",
             "required": true
         },
         {
@@ -300,19 +300,19 @@
             "name": "TF_CUDA_VERSION",
             "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
             "value": "9.0",
-            "required": true
+            "required": false
         },
         {
             "name": "TF_CUDA_COMPUTE_CAPABILITIES",
             "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
             "value": "3.0,3.5,5.2,6.0,6.1",
-            "required": true
+            "required": false
         },
         {
             "name": "TF_CUDNN_VERSION",
             "description": "TF_CUDNN_VERSION depends on TF_NEED_CUDA",
             "value": "7",
-            "required": true
+            "required": false
         },
         {
             "name": "CUDA_TOOLKIT_PATH",
