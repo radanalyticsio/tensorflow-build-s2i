@@ -215,6 +215,22 @@
                                     {
                                         "name": "TF_NEED_S3",
                                         "value": "${TF_NEED_S3}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_KAFKA",
+                                        "value": "${TF_NEED_KAFKA}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_OPENCL_SYCL",
+                                        "value": "${TF_NEED_OPENCL_SYCL}"
+                                    },
+                                    {
+                                        "name": "TF_DOWNLOAD_CLANG",
+                                        "value": "${TF_DOWNLOAD_CLANG}"
+                                    },
+                                    {
+                                        "name": "TF_SET_ANDROID_WORKSPACE",
+                                        "value": "${TF_SET_ANDROID_WORKSPACE}"
                                     }
 
                                 ],
@@ -301,7 +317,7 @@
         {
             "name": "S2I_IMAGE",
             "description": "S2I_IMAGE",
-            "value": "submod/tensorflow-build-s2i:latest",
+            "value": "submod/tf-build-s2i:latest",
             "required": true
         },
         {
@@ -421,6 +437,30 @@
         {
             "name": "TF_NEED_S3",
             "description": "TF_NEED_S3",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_KAFKA",
+            "description": "TF_NEED_KAFKA",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_OPENCL_SYCL",
+            "description": "TF_NEED_OPENCL_SYCL",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_DOWNLOAD_CLANG",
+            "description": "TF_DOWNLOAD_CLANG",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_SET_ANDROID_WORKSPACE",
+            "description": "TF_SET_ANDROID_WORKSPACE",
             "value": "0",
             "required": true
         }
