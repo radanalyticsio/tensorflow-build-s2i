@@ -5,7 +5,7 @@
 This S2I image is meant for building tensorflow binaries
 
 Building Tensorflow from source on Linux can give better performance:
-
+For example:
 `--copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 `
  will build the package with optimizations for FMA, AVX and SSE
 
@@ -28,27 +28,35 @@ Building Tensorflow from source on Linux can give better performance:
 * `GCC_HOST_COMPILER_PATH`:= /usr/bin/gcc
 * `CUDA_TOOLKIT_PATH`:= /usr/lib/cuda
 * `CUDNN_INSTALL_PATH`:= /usr/lib/cuda
+* `TF_NEED_KAFKA`:=0
+* `TF_NEED_OPENCL_SYCL`:=0
+* `TF_DOWNLOAD_CLANG`:=0
+* `TF_SET_ANDROID_WORKSPACE`:=0
+
+Here is an default build command used to build tensorflow. 
+* `CUSTOM_BUILD`:=bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+
+Following should be left blank.
+* `TEST_LOOP`:=
+* `BUILD_OPTS`:=
 
 
-Larger values of `WIDTH` and `ITERATIONS` will increase the quality of the output image at the expense of greater training time.
 
 ## Usage
 ```
-oc create -f \
-https://raw.githubusercontent.com/sub-mod/tensorflow-build-s2i/master/template.json
+oc create -f template.json
 ```
+OR
+Import the template into your namespace from Openshift UI.
 
 
 To create with tf binary for CPU :
 ```
-oc new-app --template tf-build \
-	--param="CUSTOM_BUILD=bazel build -c opt  --verbose_failures //tensorflow/tools/pip_package:build_pip_package"
+oc new-app --template tf-build"
 ```
+OR
+Create the Application from the template.
+The tensorflow wheel file will be available by clicking on the route.It is located in the bin folder.
 
-To create with tf binary for GPU :
-```
-oc new-app --template tf-build \
-	 --param="CUSTOM_BUILD=cd /workspace/serving && bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server" \
-	 --param="TF_NEED_CUDA=1" 
-```
 
+Note : GPU is not yet supported.
