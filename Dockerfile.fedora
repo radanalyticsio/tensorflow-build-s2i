@@ -59,7 +59,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
-    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
+    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg procps \
     && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
     && dnf install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip python-devel \
@@ -74,7 +74,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chgrp -R root /opt/app-root \
     && chmod -R ug+rwx /opt/app-root \
     && echo "startup --batch" >>/etc/.bazelrc \
-    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/.bazelrc
+    && echo "startup --batch" >>/root/.bazelrc \
+    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/.bazelrc \
+    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/root/.bazelrc
 
 
 #https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/ci_build/install/.bazelrc

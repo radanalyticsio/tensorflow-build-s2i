@@ -36,6 +36,9 @@ echo "TF_SET_ANDROID_WORKSPACE="$TF_SET_ANDROID_WORKSPACE
 
 echo "CUSTOM_BUILD = "$CUSTOM_BUILD
 echo "BUILD_OPTS = "$BUILD_OPTS
+echo "JAVA_HOME = "$JAVA_HOME
+echo "PATH = "$PATH
+echo "TEST_LOOP = "$TEST_LOOP
 
 
 
@@ -44,8 +47,8 @@ cd /workspace
 # Setup Bazel
 command_exists () { type "$1" &> /dev/null ; }
 if command_exists bazel ; then 
-	echo "exists"; 
-else echo "doesnt exists" && cd /tf/tools/ && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && export PATH=$HOME/bin:$PATH && bazel ; 
+	echo "bazel command exists."; 
+else echo "bazel doesnt exists" && cd /tf/tools/ && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && export PATH=$HOME/bin:$PATH && bazel ; 
 fi
 
 # git clone tf
@@ -70,6 +73,9 @@ if [ $TF_NEED_CUDA = "1" ]; then
 fi 
 
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+#bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+#bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,3.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+
 #bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
 
 # if [ -z "$CUSTOM_BUILD" ]; then
@@ -100,11 +106,16 @@ fi
 # fi
 
 
-# while :
-# do
-# 	echo "Press [CTRL+C] to stop.."
-# 	sleep 1
-# done
+if [[ $TEST_LOOP = "y" ]]
+then
+    echo "Starting a infinite while loop to debug in console terminal\n"
+    while :
+	do
+		echo "Press [CTRL+C] to stop.."
+		sleep 1
+	done
+fi
+
 
 
 echo "######################\n"

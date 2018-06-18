@@ -231,7 +231,11 @@
                                     {
                                         "name": "TF_SET_ANDROID_WORKSPACE",
                                         "value": "${TF_SET_ANDROID_WORKSPACE}"
-                                    }
+                                    },
+                                    {
+                                        "name": "TEST_LOOP",
+                                        "value": "${TEST_LOOP}"
+                                    },
 
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -241,7 +245,17 @@
                                         "containerPort": 8080,
                                         "protocol": "TCP"
                                     }
-                                ]
+                                ],
+                               "resources": {
+                                    "limits": {
+                                        "cpu": "6",
+                                        "memory": "8Gi"
+                                    },
+                                    "requests": {
+                                        "cpu": "3",
+                                        "memory": "4Gi"
+                                    }
+                                },
                             }
                         ]
                     }
@@ -278,7 +292,8 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appid": "tf-build-${APPLICATION_NAME}"
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
                 }
             },
             "spec": {
@@ -317,13 +332,13 @@
         {
             "name": "S2I_IMAGE",
             "description": "S2I_IMAGE",
-            "value": "submod/tf-build-s2i:latest",
+            "value": "submod/tf-fedora28-s2i-build:latest",
             "required": true
         },
         {
             "name": "CUSTOM_BUILD",
             "description": "Set to custom BUILD command",
-            "value": "",
+            "value": "bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package",
             "required": false
         },
         {
@@ -463,6 +478,12 @@
             "description": "TF_SET_ANDROID_WORKSPACE",
             "value": "0",
             "required": true
+        },
+        {
+            "name": "TEST_LOOP",
+            "description": "If y then test image with a while loop.Default is empty",
+            "value": "",
+            "required": false
         }
     ]
 }
