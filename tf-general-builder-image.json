@@ -2,7 +2,7 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "tf-fc28-s2i-build",
+        "name": "tf-s2i-build",
         "annotations": {
             "description": "tf-s2i-build",
             "tags": "tf-s2i-build"
@@ -110,7 +110,7 @@
         {
             "name": "APPLICATION_NAME",
             "description": "The name of the application.",
-            "value": "tf-fedora28-builder-image",
+            "value": "tf-general-builder-image",
             "from": "[a-zA-Z0-9]{10}",
             "required": true
         },
@@ -122,19 +122,19 @@
         },
         {
             "name": "S2I_IMAGE",
-            "description": "S2I_IMAGE",
-            "value": "registry.fedoraproject.org/f28/s2i-core",
+            "description": "registry.fedoraproject.org/f27/s2i-core, registry.fedoraproject.org/f28/s2i-core, registry.access.redhat.com/rhscl/s2i-core-rhel7",
+            "value": "registry.fedoraproject.org/f27/s2i-core",
             "required": true
         },
         {
             "name": "DOCKER_FILE_PATH",
-            "description": "Dockerfile.",
-            "value": "Dockerfile.fedora28",
+            "description": "Dockerfile.fedora27, Dockerfile.fedora28, Dockerfile.rhel75.",
+            "value": "Dockerfile.fedora27",
             "required": true
         },
         {
             "name": "NB_PYTHON_VER",
-            "description": "Python version 2.7, 3.6 .",
+            "description": "Python version 2.7,3.5,3.6 .",
             "value": "3.6",
             "required": true
         },

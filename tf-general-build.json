@@ -1,0 +1,488 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "tf-build",
+        "annotations": {
+            "description": "tf-build",
+            "tags": "tf-app"
+        }
+    },
+    "objects": [
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${SOURCE_REPOSITORY}"
+                    }
+                },
+                "strategy": {
+                    "type": "Source",
+                    "sourceStrategy": {
+                        "from": {
+                            "kind": "ImageStreamTag",
+                            "name": "${BUILDER_IMAGESTREAM}"
+                        }
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}:latest"
+                    }
+                }
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "type": "Rolling"
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "${APPLICATION_NAME}"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "${APPLICATION_NAME}:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "selector": {
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                },
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "appid": "tf-build-${APPLICATION_NAME}",
+                            "deploymentconfig": "${APPLICATION_NAME}",
+                            "appName": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "env": [
+                                    {
+                                        "name": "PORT",
+                                        "value": "${PORT}"
+                                    },
+                                    {
+                                        "name": "CUSTOM_BUILD",
+                                        "value": "${CUSTOM_BUILD}"
+                                    },
+                                    {
+                                        "name": "BUILD_OPTS",
+                                        "value": "${BUILD_OPTS}"
+                                    },
+                                    {
+                                        "name": "TF_CUDA_VERSION",
+                                        "value": "${TF_CUDA_VERSION}"
+                                    },
+                                    {
+                                        "name": "TF_CUDA_COMPUTE_CAPABILITIES",
+                                        "value": "${TF_CUDA_COMPUTE_CAPABILITIES}"
+                                    },
+                                    {
+                                        "name": "TF_CUDNN_VERSION",
+                                        "value": "${TF_CUDNN_VERSION}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_OPENCL_SYCL",
+                                        "value": "${TF_NEED_OPENCL_SYCL}"
+                                    },
+                                    {
+                                        "name": "TF_CUDA_CLANG",
+                                        "value": "${TF_CUDA_CLANG}"
+                                    },
+                                    {
+                                        "name": "GCC_HOST_COMPILER_PATH",
+                                        "value": "${GCC_HOST_COMPILER_PATH}"
+                                    },
+                                    {
+                                        "name": "CUDA_TOOLKIT_PATH",
+                                        "value": "${CUDA_TOOLKIT_PATH}"
+                                    },
+                                    {
+                                        "name": "CUDNN_INSTALL_PATH",
+                                        "value": "${CUDNN_INSTALL_PATH}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_JEMALLOC",
+                                        "value": "${TF_NEED_JEMALLOC}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_GCP",
+                                        "value": "${TF_NEED_GCP}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_VERBS",
+                                        "value": "${TF_NEED_VERBS}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_HDFS",
+                                        "value": "${TF_NEED_HDFS}"
+                                    },
+                                    {
+                                        "name": "TF_ENABLE_XLA",
+                                        "value": "${TF_ENABLE_XLA}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_OPENCL",
+                                        "value": "${TF_NEED_OPENCL}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_CUDA",
+                                        "value": "${TF_NEED_CUDA}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_MPI",
+                                        "value": "${TF_NEED_MPI}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_GDR",
+                                        "value": "${TF_NEED_GDR}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_S3",
+                                        "value": "${TF_NEED_S3}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_KAFKA",
+                                        "value": "${TF_NEED_KAFKA}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_OPENCL_SYCL",
+                                        "value": "${TF_NEED_OPENCL_SYCL}"
+                                    },
+                                    {
+                                        "name": "TF_DOWNLOAD_CLANG",
+                                        "value": "${TF_DOWNLOAD_CLANG}"
+                                    },
+                                    {
+                                        "name": "TF_SET_ANDROID_WORKSPACE",
+                                        "value": "${TF_SET_ANDROID_WORKSPACE}"
+                                    },
+                                    {
+                                        "name": "TEST_LOOP",
+                                        "value": "${TEST_LOOP}"
+                                    },
+                                    {
+                                        "name": "NB_PYTHON_VER",
+                                        "value": "${NB_PYTHON_VER}"
+                                    },
+                                    {
+                                        "name": "BAZEL_VERSION",
+                                        "value": "${BAZEL_VERSION}"
+                                    }
+
+                                ],
+                                "name": "${APPLICATION_NAME}",
+                                "image": "${APPLICATION_NAME}:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                               "resources": {
+                                    "limits": {
+                                        "cpu": "6",
+                                        "memory": "8Gi"
+                                    },
+                                    "requests": {
+                                        "cpu": "3",
+                                        "memory": "4Gi"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    }
+                ],
+                "selector": {
+                    "deploymentconfig": "${APPLICATION_NAME}"
+                }
+            }
+        },
+        {
+            "kind": "Route",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "host": "",
+                "to": {
+                    "kind": "Service",
+                    "name": "${APPLICATION_NAME}",
+                    "weight": 100
+                },
+                "port": {
+                    "targetPort": "8080-tcp"
+                }
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APPLICATION_NAME",
+            "description": "The name of the application.",
+            "value": "tf-build",
+            "from": "[a-zA-Z0-9]{10}",
+            "required": true
+        },
+        {
+            "name": "SOURCE_REPOSITORY",
+            "description": "Git repository for source.",
+            "value": "https://github.com/sub-mod/empty-repo.git",
+            "required": true
+        },
+        {
+            "name": "PORT",
+            "description": "port",
+            "value": "8080",
+            "required": true
+        },
+        {
+            "name": "BUILDER_IMAGESTREAM",
+            "description": "BUILDER_IMAGESTREAM",
+            "value": "tf-fedora27-builder-image:latest, tf-fedora28-builder-image:latest, tf-rhel7-builder-image:latest",
+            "required": true
+        },
+        {
+            "name": "CUSTOM_BUILD",
+            "description": "Set to custom BUILD command",
+            "value": "bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package",
+            "required": false
+        },
+        {
+            "name": "BUILD_OPTS",
+            "description": "Custom options to bazel BUILD command",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "TF_CUDA_VERSION",
+            "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
+            "value": "9.0",
+            "required": false
+        },
+        {
+            "name": "TF_CUDA_COMPUTE_CAPABILITIES",
+            "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
+            "value": "3.0,3.5,5.2,6.0,6.1",
+            "required": false
+        },
+        {
+            "name": "TF_CUDNN_VERSION",
+            "description": "TF_CUDNN_VERSION depends on TF_NEED_CUDA",
+            "value": "7",
+            "required": false
+        },
+        {
+            "name": "CUDA_TOOLKIT_PATH",
+            "description": "CUDA_TOOLKIT_PATH depends on TF_NEED_CUDA",
+            "value": "/usr/local/cuda",
+            "required": true
+        },
+        {
+            "name": "CUDNN_INSTALL_PATH",
+            "description": "CUDNN_INSTALL_PATH depends on TF_NEED_CUDA",
+            "value": "/usr/local/cuda",
+            "required": true
+        },
+        {
+            "name": "GCC_HOST_COMPILER_PATH",
+            "description": "GCC_HOST_COMPILER_PATH depends on TF_NEED_CUDA",
+            "value": "/usr/bin/gcc",
+            "required": true
+        },        
+        {
+            "name": "TF_NEED_OPENCL_SYCL",
+            "description": "TF_NEED_OPENCL_SYCL",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_CUDA_CLANG",
+            "description": "TF_CUDA_CLANG",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_JEMALLOC",
+            "description": "TF_NEED_JEMALLOC",
+            "value": "1",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_GCP",
+            "description": "TF_NEED_GCP",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_VERBS",
+            "description": "TF_NEED_VERBS",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_HDFS",
+            "description": "TF_NEED_HDFS",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_ENABLE_XLA",
+            "description": "TF_ENABLE_XLA",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_OPENCL",
+            "description": "TF_NEED_OPENCL",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_CUDA",
+            "description": "TF_NEED_CUDA",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_MPI",
+            "description": "TF_NEED_MPI",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_GDR",
+            "description": "TF_NEED_GDR",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_S3",
+            "description": "TF_NEED_S3",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_KAFKA",
+            "description": "TF_NEED_KAFKA",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_OPENCL_SYCL",
+            "description": "TF_NEED_OPENCL_SYCL",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_DOWNLOAD_CLANG",
+            "description": "TF_DOWNLOAD_CLANG",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_SET_ANDROID_WORKSPACE",
+            "description": "TF_SET_ANDROID_WORKSPACE",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TEST_LOOP",
+            "description": "If y then test image with a while loop.Default is empty",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "NB_PYTHON_VER",
+            "description": "Python version 2.7,3.5,3.6 .",
+            "value": "3.6",
+            "required": true
+        },
+        {
+            "name": "BAZEL_VERSION",
+            "description": "BAZEL_VERSION",
+            "value": "0.11.0",
+            "required": true
+        }
+    ]
+}
+
