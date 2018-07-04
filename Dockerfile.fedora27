@@ -66,9 +66,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel ; fi
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python35-devel ; fi
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python36-devel ; fi
+    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel ; fi \
+    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python35-devel ; fi \
+    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python36-devel ; fi \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
     && python$NB_PYTHON_VER get-pip.py \
     && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg procps \
