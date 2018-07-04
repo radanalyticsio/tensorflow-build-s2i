@@ -106,7 +106,7 @@
         {
             "name": "APPLICATION_NAME",
             "description": "The name of the application.",
-            "value": "tf-fedora27-builder-image",
+            "value": "tf-fedora28-builder-image",
             "from": "[a-zA-Z0-9]{10}",
             "required": true
         },
@@ -119,13 +119,13 @@
         {
             "name": "S2I_IMAGE",
             "description": "S2I_IMAGE",
-            "value": "registry.fedoraproject.org/f27/s2i-core",
+            "value": "registry.fedoraproject.org/f28/s2i-core",
             "required": true
         },
         {
             "name": "DOCKER_FILE_PATH",
             "description": "Dockerfile.",
-            "value": "Dockerfile.fedora27",
+            "value": "Dockerfile.fedora",
             "required": true
         },
         {
