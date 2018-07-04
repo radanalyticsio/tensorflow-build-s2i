@@ -1,7 +1,52 @@
+FROM registry.access.redhat.com/rhscl/s2i-core-rhel7
 
-FROM registry.fedoraproject.org/f28/s2i-core
 
-MAINTAINER Subin Modeel <smodeel@redhat.com>
+# Not essential, but wise to set the lang
+# Note: Users with other languages should set this in their derivative image
+ENV LANGUAGE en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL=""
+ENV PYTHONIOENCODING UTF-8
+ENV NB_USER=default
+ENV NB_UID=1001
+ENV PYTHON_VER=2.7
+ENV PYTHON_BIN_PATH=/usr/bin/python 
+ENV TINI_VERSION=v0.16.1 
+
+## Bazel
+ENV PYTHON_LIB_PATH=/usr/lib64/python2.7/site-packages
+ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
+ENV BAZELRC /root/.bazelrc
+ENV BAZEL_VERSION 0.11.0
+ENV CUDA_VERSION 9.2.88
+
+RUN NVIDIA_GPGKEY_SUM=d1be581509378368edeec8c1eb2958702feedf3bc3d17011adbf24efacce4ab5 && \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/7fa2af80.pub | sed '/^Version/d' > /etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA && \
+        echo "$NVIDIA_GPGKEY_SUM  /etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA" | sha256sum -c --strict -
+
+        COPY cuda.repo /etc/yum.repos.d/cuda.repo
+
+        ENV CUDA_PKG_VERSION 9-2-$CUDA_VERSION-1
+        RUN yum install -y \
+                cuda-cudart-$CUDA_PKG_VERSION && \
+                    ln -s cuda-9.2 /usr/local/cuda && \
+                        rm -rf /var/cache/yum/*
+
+# nvidia-docker 1.0
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+LABEL com.nvidia.cuda.version="${CUDA_VERSION}"
+
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+    ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+    ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
+
 
 USER root
 
@@ -13,33 +58,12 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.tags="builder,python,tf-build" \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
-# DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.11.0
-ARG NB_PYTHON_VER=3.6
-ENV BAZEL_VERSION=$BAZEL_VERSION
-ENV NB_PYTHON_VER=$NB_PYTHON_VER
 
-# Not essential, but wise to set the lang
-# Note: Users with other languages should set this in their derivative image
-ENV LANGUAGE en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV LC_ALL=""
-ENV PYTHONIOENCODING UTF-8
-ENV NB_USER=default
-ENV NB_UID=1001
-#### ENV NB_PYTHON_VER=DONOT UNCOMMENT
-ENV PYTHON_BIN_PATH=/usr/bin/python
-ENV TINI_VERSION=v0.16.1 
 
-## Bazel
-ENV PYTHON_LIB_PATH=/usr/lib64/python$NB_PYTHON_VER/site-packages
-ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
-ENV BAZELRC /root/.bazelrc
-#### ENV BAZEL_VERSION = DONOT UNCOMMENT
 ################################################
 ## Tensorflow ./configure options for Bazel
 ################################################
-ENV PYTHON_BIN_PATH=/usr/bin/python$NB_PYTHON_VER
+ENV PYTHON_BIN_PATH=/usr/bin/python
 ENV CC_OPT_FLAGS -march=native
 ENV TF_NEED_JEMALLOC 1
 ENV TF_NEED_GCP 0
@@ -64,20 +88,25 @@ ADD entrypoint /entrypoint
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
-    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && yum install -y yum-utils \
+    && yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+    && yum install -y dkms \
+    && prepare-yum-repositories rhel-server-rhscl-7-rpms \
+    && yum install -y scl-utils python27 python27-python-devel python27-python-setuptools python27-python-pip tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && yum install -y cuda-${CUDA_VERSION}  \
     && chgrp -R root /opt \
+    && rpm -qf /bin/scl \
+    && scl enable python27 bash \
+    && scl -l \
+    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
+    && python2.7 get-pip.py \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
-    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && python$NB_PYTHON_VER get-pip.py \
-    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg procps \
-    && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
-    && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
-    && dnf install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip \
-    && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
+    && yum install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
+    && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
+    && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
+    && yum install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip python-devel \
+    && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
     && cd /tmp \
@@ -88,9 +117,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chgrp -R root /opt/app-root \
     && chmod -R ug+rwx /opt/app-root \
     && echo "startup --batch" >>/etc/.bazelrc \
-    && echo "startup --batch" >>/root/.bazelrc \
-    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/.bazelrc \
-    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/root/.bazelrc
+    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/.bazelrc
 
 
 #https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/ci_build/install/.bazelrc
@@ -152,4 +179,3 @@ ENTRYPOINT ["/entrypoint"]
 
 # TODO: Set the default CMD for the image
 CMD ["/usr/libexec/s2i/usage"]
-

@@ -67,25 +67,27 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python27-python-devel  ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils python35 && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils python36 && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
-    && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
-    && chgrp -R root /opt \
-    && rpm -qf /bin/scl \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then scl enable python27 bash  ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then scl enable python35 bash; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then scl enable python36 bash; fi \
-    && scl -l \
-    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && python$PYTHON_VER get-pip.py \
-    && chmod -R a+rwx /opt \
-    && chmod a+rw /etc/passwd \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python27-python-devel && scl enable python27 bash ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash  ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils rh-python36 rh-python36-python-pip rh-python36-scldevel && scl enable rh-python36 bash  ; fi \
     && yum install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
     && yum install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
+    && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && rpm -qf /bin/scl \
+    && scl -l \
+    && ls -l /usr/bin/python* \
+    && echo $PATH \
+    && echo $PYTHON_VER \
+    && chgrp -R root /opt \
+    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then python$PYTHON_VER get-pip.py ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then rm -fr /usr/bin/python && ln -s /opt/rh/rh-python35/root/usr/bin/python3.5 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python35/root/usr/bin/pip /usr/bin/python; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then rm -fr /usr/bin/python && ln -s /opt/rh/rh-python36/root/usr/bin/python3.6 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python36/root/usr/bin/pip /usr/bin/python; fi \
+    && chmod -R a+rwx /opt \
+    && chmod a+rw /etc/passwd \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
     && cd /tmp \
