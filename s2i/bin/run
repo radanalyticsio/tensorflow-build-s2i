@@ -75,7 +75,7 @@ fi
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,3.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-
+bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
 
 # if [ -z "$CUSTOM_BUILD" ]; then
@@ -127,7 +127,9 @@ if (( $? )); then
 	echo "      BUILD  ERROR     \n"
 	echo "######################\n"
 	mkdir -p /workspace/bins
-	mv /workspace/ERROR.txt /workspace/bins/
+	if ls -l  /workspace/ERROR.txt; then
+		mv /workspace/ERROR.txt /workspace/bins/ ;
+	fi
 else
 	echo "######################\n"
 	echo "      BUILD  SUCCESS     \n"
@@ -135,11 +137,18 @@ else
 	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
 		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
 	fi
+	if ls -l  /workspace/ERROR.txt; then
+		mv /workspace/ERROR.txt /workspace/bins/ ;
+	fi
 fi
 
 
 cd /workspace/
-python -m SimpleHTTPServer $PORT 
+if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
+	python -m SimpleHTTPServer $PORT ; 
+else python -m http.server $PORT ; 
+fi
+ 
 
 
 
