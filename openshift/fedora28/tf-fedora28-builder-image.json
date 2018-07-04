@@ -95,12 +95,12 @@
                 },
                 "resources": {
                     "limits": {
-                        "cpu": "3",
-                        "memory": "4Gi"
+                        "cpu": "6",
+                        "memory": "8Gi"
                     },
                     "requests": {
-                        "cpu": "2",
-                        "memory": "3Gi"
+                        "cpu": "3",
+                        "memory": "4Gi"
                     }
                 }
             }

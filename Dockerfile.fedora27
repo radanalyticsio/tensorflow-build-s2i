@@ -65,8 +65,8 @@ ADD entrypoint /entrypoint
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
     && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
+    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
+    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
     && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
