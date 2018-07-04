@@ -1,0 +1,150 @@
+
+FROM registry.fedoraproject.org/f27/s2i-core
+
+MAINTAINER Subin Modeel <smodeel@redhat.com>
+
+USER root
+
+ENV BUILDER_VERSION 1.0
+
+LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
+      io.k8s.display-name="Tensorflow BUILD" \
+      io.openshift.expose-services="8080:http" \
+      io.openshift.tags="builder,python,tf-build" \
+      io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
+
+
+# Not essential, but wise to set the lang
+# Note: Users with other languages should set this in their derivative image
+ENV LANGUAGE en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL=""
+ENV PYTHONIOENCODING UTF-8
+ENV NB_USER=default
+ENV NB_UID=1001
+#ENV NB_PYTHON_VER=Donot uncomment
+ENV PYTHON_BIN_PATH=/usr/bin/python$NB_PYTHON_VER
+ENV TINI_VERSION=v0.16.1 
+
+## Bazel
+ENV PYTHON_LIB_PATH=/usr/lib64/python$NB_PYTHON_VER/site-packages
+ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
+ENV BAZELRC /root/.bazelrc
+ENV BAZEL_VERSION 0.11.0
+################################################
+## Tensorflow ./configure options for Bazel
+################################################
+ENV PYTHON_BIN_PATH=/usr/bin/python$NB_PYTHON_VER
+ENV CC_OPT_FLAGS -march=native
+ENV TF_NEED_JEMALLOC 1
+ENV TF_NEED_GCP 0
+ENV TF_NEED_VERBS 0
+ENV TF_NEED_HDFS 0
+ENV TF_ENABLE_XLA 0
+ENV TF_NEED_OPENCL 0
+ENV TF_NEED_CUDA 0
+ENV TF_NEED_MPI 0
+ENV TF_NEED_GDR 0
+ENV TF_NEED_S3 0
+ENV TF_NEED_KAFKA 0
+ENV TF_NEED_OPENCL_SYCL 0
+ENV TF_DOWNLOAD_CLANG 0
+ENV TF_SET_ANDROID_WORKSPACE 0
+ENV PATH /usr/local/bin:$PATH
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
+
+
+ADD entrypoint /entrypoint
+
+
+RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
+    && chmod +x /entrypoint \
+    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && chgrp -R root /opt \
+    && chmod -R a+rwx /opt \
+    && chmod a+rw /etc/passwd \
+    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel ; fi
+    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python35-devel ; fi
+    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python36-devel ; fi
+    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
+    && python$NB_PYTHON_VER get-pip.py \
+    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg procps \
+    && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
+    && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
+    && dnf install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip \
+    && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
+    && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
+    && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
+    && cd /tmp \
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 0527A9B7 && gpg --verify /tmp/tini.asc \
+    && mv /tmp/tini /usr/local/bin/tini \
+    && chmod +x /usr/local/bin/tini \
+    && chown -R 1001:1001 /opt/app-root \
+    && chgrp -R root /opt/app-root \
+    && chmod -R ug+rwx /opt/app-root \
+    && echo "startup --batch" >>/etc/.bazelrc \
+    && echo "startup --batch" >>/root/.bazelrc \
+    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/.bazelrc \
+    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/root/.bazelrc
+
+
+#https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/ci_build/install/.bazelrc
+# Running bazel inside a `docker build` command causes trouble, cf:
+#   https://github.com/bazelbuild/bazel/issues/134
+# The easiest solution is to set up a bazelrc file forcing --batch.
+# Similarly, we need to workaround sandboxing issues:
+#   https://github.com/bazelbuild/bazel/issues/418
+#
+
+# A cloned repo is found under serving folder
+#Size of bazel-$BAZEL_VERSION-installer-linux-x86_64.sh is 200MB+
+# downloaded file is available under bazel folder
+
+
+
+# No yum commands here
+# removed python to fix numpy issue
+RUN mkdir -p /tf \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -U setuptools \
+    && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow \
+    && mkdir -p /tf/tools \
+    && cd /tf/tools \
+    && wget -q https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
+    && ls -l /tf/tools \
+    && chmod +x bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
+    && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
+    && bazel \
+    && usermod -g root $NB_USER \
+    && mkdir -p /workspace \
+    && chown $NB_UID:root /workspace \
+    && chmod 1777 /workspace \
+    && mkdir -p /home/$NB_USER \
+    && chown -R $NB_UID:root /home/$NB_USER \
+    && chmod g+rwX,o+rX -R /home/$NB_USER
+
+COPY ./s2i/bin/ /usr/libexec/s2i
+
+# NO CLEANUP
+# Donot add below commands
+#    && yum erase -y gcc gcc-c++ glibc-devel \
+#    && yum clean all -y \
+
+
+EXPOSE 8080
+
+ENV HOME /home/$NB_USER
+# This default user is created in the openshift/base-centos7 image
+USER 1001
+# Make the default PWD somewhere that the user can write. This is
+# useful when connecting with 'oc run' and starting a 'spark-shell',
+# which will likely try to create files and directories in PWD and
+# error out if it cannot.
+
+WORKDIR /workspace
+
+ENTRYPOINT ["/entrypoint"]
+
+# TODO: Set the default CMD for the image
+CMD ["/usr/libexec/s2i/usage"]
+
