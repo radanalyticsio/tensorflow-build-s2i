@@ -2,10 +2,10 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "tf-s2i-build",
+        "name": "tf-fc27-s2i-build",
         "annotations": {
             "description": "tf-s2i-build",
-            "tags": "tf-app"
+            "tags": "tf-s2i-build"
         }
     },
     "objects": [
@@ -83,7 +83,7 @@
                                     {
                                         "name": "BAZEL_VERSION",
                                         "value": "${BAZEL_VERSION}"
-                                    },
+                                    }
                         ]
                     }
                 },
