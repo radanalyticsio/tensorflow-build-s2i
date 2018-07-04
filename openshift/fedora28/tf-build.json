@@ -318,7 +318,7 @@
         {
             "name": "BUILDER_IMAGESTREAM",
             "description": "BUILDER_IMAGESTREAM",
-            "value": "tf-fedora27-builder-image:latest",
+            "value": "tf-fedora28-builder-image:latest",
             "required": true
         },
         {

@@ -1,5 +1,5 @@
 
-FROM registry.fedoraproject.org/f27/s2i-core
+FROM registry.fedoraproject.org/f28/s2i-core
 
 MAINTAINER Subin Modeel <smodeel@redhat.com>
 

@@ -80,6 +80,10 @@
                                         "name": "NB_PYTHON_VER",
                                         "value": "${NB_PYTHON_VER}"
                                     },
+                                    {
+                                        "name": "BAZEL_VERSION",
+                                        "value": "${BAZEL_VERSION}"
+                                    },
                         ]
                     }
                 },
@@ -132,6 +136,12 @@
             "name": "NB_PYTHON_VER",
             "description": "Python version 2.7, 3.6 .",
             "value": "3.6",
+            "required": true
+        },
+        {
+            "name": "BAZEL_VERSION",
+            "description": "BAZEL_VERSION",
+            "value": "0.11.0",
             "required": true
         }
     ]

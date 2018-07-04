@@ -214,6 +214,14 @@
                                         "name": "TEST_LOOP",
                                         "value": "${TEST_LOOP}"
                                     },
+                                    {
+                                        "name": "NB_PYTHON_VER",
+                                        "value": "${NB_PYTHON_VER}"
+                                    },
+                                    {
+                                        "name": "BAZEL_VERSION",
+                                        "value": "${BAZEL_VERSION}"
+                                    }
 
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -233,7 +241,7 @@
                                         "cpu": "3",
                                         "memory": "4Gi"
                                     }
-                                },
+                                }
                             }
                         ]
                     }
@@ -462,6 +470,18 @@
             "description": "If y then test image with a while loop.Default is empty",
             "value": "",
             "required": false
+        },
+        {
+            "name": "NB_PYTHON_VER",
+            "description": "Python version 2.7, 3.6 .",
+            "value": "3.6",
+            "required": true
+        },
+        {
+            "name": "BAZEL_VERSION",
+            "description": "BAZEL_VERSION",
+            "value": "0.11.0",
+            "required": true
         }
     ]
 }
