@@ -70,11 +70,21 @@
                 "strategy": {
                     "type": "Docker",
                     "dockerStrategy": {
-                        "dockerfilePath": "Dockerfile.rhel7",
+                        "dockerfilePath": "${DOCKER_FILE_PATH}",
                         "from": {
                             "kind": "ImageStreamTag",
                             "name": "${APPLICATION_NAME}-s2i:latest"
-                        }
+                        },
+                        "env": [
+                                    {
+                                        "name": "NB_PYTHON_VER",
+                                        "value": "${NB_PYTHON_VER}"
+                                    },
+                                    {
+                                        "name": "BAZEL_VERSION",
+                                        "value": "${BAZEL_VERSION}"
+                                    }
+                        ]
                     }
                 },
                 "output": {
@@ -85,12 +95,12 @@
                 },
                 "resources": {
                     "limits": {
-                        "cpu": "6",
-                        "memory": "8Gi"
-                    },
-                    "requests": {
                         "cpu": "3",
                         "memory": "4Gi"
+                    },
+                    "requests": {
+                        "cpu": "2",
+                        "memory": "3Gi"
                     }
                 }
             }
@@ -114,6 +124,24 @@
             "name": "S2I_IMAGE",
             "description": "S2I_IMAGE",
             "value": "registry.access.redhat.com/rhscl/s2i-core-rhel7",
+            "required": true
+        },
+        {
+            "name": "DOCKER_FILE_PATH",
+            "description": "Dockerfile.",
+            "value": "Dockerfile.rhel75",
+            "required": true
+        },
+        {
+            "name": "NB_PYTHON_VER",
+            "description": "Python version 2.7, 3.6 .",
+            "value": "3.6",
+            "required": true
+        },
+        {
+            "name": "BAZEL_VERSION",
+            "description": "BAZEL_VERSION",
+            "value": "0.11.0",
             "required": true
         }
     ]
