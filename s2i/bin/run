@@ -39,6 +39,7 @@ echo "BUILD_OPTS = "$BUILD_OPTS
 echo "JAVA_HOME = "$JAVA_HOME
 echo "PATH = "$PATH
 echo "TEST_LOOP = "$TEST_LOOP
+echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
 
 
 
@@ -53,7 +54,7 @@ fi
 
 # git clone tf
 cd /workspace
-git clone --branch=r1.9 --depth=1 https://github.com/tensorflow/tensorflow.git .
+git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
 ./configure
 
 
