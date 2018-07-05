@@ -221,6 +221,10 @@
                                     {
                                         "name": "BAZEL_VERSION",
                                         "value": "${BAZEL_VERSION}"
+                                    },
+                                    {
+                                        "name": "TF_GIT_BRANCH",
+                                        "value": "${TF_GIT_BRANCH}"
                                     }
 
                                 ],
@@ -481,6 +485,12 @@
             "name": "BAZEL_VERSION",
             "description": "BAZEL_VERSION",
             "value": "0.11.0",
+            "required": true
+        },
+        {
+            "name": "TF_GIT_BRANCH",
+            "description": "TF_GIT_BRANCH",
+            "value": "r1.9",
             "required": true
         }
     ]
