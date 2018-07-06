@@ -7,7 +7,8 @@
 #	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
 #
 echo "run...."
-echo "PORT = "$PORT
+
+### These ENVs should be set for configure.
 echo "TF_NEED_JEMALLOC = "$TF_NEED_JEMALLOC
 echo "TF_NEED_GCP = "$TF_NEED_GCP
 echo "TF_NEED_VERBS = "$TF_NEED_VERBS
@@ -27,62 +28,87 @@ echo "GCC_HOST_COMPILER_PATH= "$GCC_HOST_COMPILER_PATH
 echo "CUDA_TOOLKIT_PATH= "$CUDA_TOOLKIT_PATH
 echo "CUDNN_INSTALL_PATH= "$CUDNN_INSTALL_PATH
 
-#1.9 onwards
+### 1.9 tensorflow needs below new configs
 echo "TF_NEED_KAFKA="$TF_NEED_KAFKA
 echo "TF_NEED_OPENCL_SYCL="$TF_NEED_OPENCL_SYCL
 echo "TF_DOWNLOAD_CLANG="$TF_DOWNLOAD_CLANG
 echo "TF_SET_ANDROID_WORKSPACE="$TF_SET_ANDROID_WORKSPACE
 
-
-echo "CUSTOM_BUILD = "$CUSTOM_BUILD
-echo "BUILD_OPTS = "$BUILD_OPTS
-echo "JAVA_HOME = "$JAVA_HOME
+### These ENVs should be correctly set.
 echo "PATH = "$PATH
-echo "TEST_LOOP = "$TEST_LOOP
-echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
+echo "JAVA_HOME = "$JAVA_HOME
 echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH
 echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH
 echo "PYTHON_BIN_PATH ="$PYTHON_BIN_PATH 
 
+### These ENVs are used in build/publish logic
+echo "PORT = "$PORT
+echo "BUILD_OPTS = "$BUILD_OPTS
+echo "TEST_LOOP = "$TEST_LOOP
+echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
+echo "NB_PYTHON_VER = "$NB_PYTHON_VER
+echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
+echo "CUSTOM_BUILD = "$CUSTOM_BUILD
+
+
+ 
+
+TEST_CMD="import tensorflow as tf;a=tf.constant([1.0,2.0,3.0,4.0,5.0,6.0],shape=[2,3],name='a');b=tf.constant([1.0,2.0,3.0,4.0,5.0,6.0],shape=[3,2],name='b');c=tf.matmul(a,b);sess=tf.Session(config=tf.ConfigProto(log_device_placement=True));print(sess.run(c))"
 
 
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
 	export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
-	echo $LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
-	echo $PYTHON_LIB_PATH ; fi 
-if [ "$NB_PYTHON_VER" = "3.6" ] ; then export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
-	echo $LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
-	echo $PYTHON_LIB_PATH  ; fi
+	echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
+	echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ; fi 
+if [ "$NB_PYTHON_VER" = "3.6" ] ; then 
+	export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
+	echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
+	echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  ; fi
 
 
+
+
+### Setup Bazel
 cd /workspace
-
-# Setup Bazel
 command_exists () { type "$1" &> /dev/null ; }
 if command_exists bazel ; then 
 	echo "bazel command exists."; 
-else echo "bazel doesnt exists" && cd /tf/tools/ && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && export PATH=$HOME/bin:$PATH && bazel ; 
+else 
+	echo "bazel doesnt exists" && cd /tf/tools/ && 
+	./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh --user && 
+	export PATH=$HOME/bin:$PATH && bazel && echo "PATH = "$PATH ; 
 fi
 
-# git clone tf
+### git clone tf
 cd /workspace
+echo "####################################\n"
+echo "      clone git repo.....       	  \n"
+echo "####################################\n"
 git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
+echo "####################################\n"
+echo "      configure.....       	      \n"
+echo "####################################\n"
 ./configure
 
 
-#BUILD
 export PATH=$HOME/bin:$PATH
+echo "PATH = "$PATH
 
-
+###########################
+### 		TODO
+###########################
+### NO GPU support yet
+###########################
 echo "TF_NEED_CUDA = "$TF_NEED_CUDA
 if [ $TF_NEED_CUDA = "1" ]; then 
-	echo "######################\n"
-	echo "      set cuda       \n"
-	echo "######################\n"
-	cd /workspace/serving/tensorflow
-	sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
-	cd /workspace/serving/
-	sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
+	echo "####################################\n"
+	echo "      CUDA BUILD TODO.....       	  \n"
+	echo "####################################\n"
+	exit 1;
+	#cd /workspace/serving/tensorflow
+	#sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
+	#cd /workspace/serving/
+	#sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
 fi 
 
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
@@ -91,36 +117,12 @@ fi
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
 
-# if [ -z "$CUSTOM_BUILD" ]; then
-# 	bazel build -c opt $BUILD_OPTS --verbose_failures //tensorflow/tools/pip_package:build_pip_package | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
-# 	if (( $? )); then
-# 	    echo "######################\n"
-# 		echo "      BUILD  ERROR     \n"
-# 		echo "######################\n"
-# 		mkdir -p /workspace/bins
-# 		mv /workspace/ERROR.txt /workspace/bins/
-# 	else
-# 	    echo "######################\n"
-# 		echo "      BUILD  SUCCESS     \n"
-# 		echo "######################\n"
-# 		ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package && bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
-# 	fi
-# else
-# 	echo "######################\n"
-# 	echo "      CUSTOM  BUILD     \n"
-# 	echo "######################\n"
-# 	eval "$CUSTOM_BUILD" | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
-# 	if (( $? )); then
-# 	    echo "######################\n"
-# 		echo "      BUILD  ERROR     \n"
-# 		echo "######################\n"
-# 		mkdir -p /workspace/bins
-# 		mv /workspace/ERROR.txt /workspace/bins/
-# fi
-
-
+### enable TEST_LOOP only which deployment config and NOT with Jobs. 
 if [[ $TEST_LOOP = "y" ]]
 then
+	echo "####################################\n"
+	echo "      DEV/TEST MODE.....       	   \n"
+	echo "####################################\n"
     echo "Starting a infinite while loop to debug in console terminal\n"
     while :
 	do
@@ -130,38 +132,77 @@ then
 fi
 
 
+echo "####################################\n"
+echo "      CUSTOM_BUILD.....       	  \n"
+echo "####################################\n"
+cd /workspace
+mkdir -p /workspace/bins
 
-echo "######################\n"
-echo "      CUSTOM  BUILD     \n"
-echo "######################\n"
-eval "$CUSTOM_BUILD" | tee /workspace/ERROR.txt ; test ${PIPESTATUS[0]} -eq 0
+eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/CUSTOM_BUILD.log ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
-    echo "######################\n"
-	echo "      BUILD  ERROR     \n"
-	echo "######################\n"
-	mkdir -p /workspace/bins
-	if ls -l  /workspace/ERROR.txt; then
-		mv /workspace/ERROR.txt /workspace/bins/ ;
-	fi
+    echo "####################################\n"
+	echo "      CUSTOM_BUILD  ERROR!!     	  \n"
+	echo "####################################\n"
 else
-	echo "######################\n"
-	echo "      BUILD  SUCCESS     \n"
-	echo "######################\n"
+	echo "####################################\n"
+	echo "      CUSTOM_BUILD  SUCCESS     	  \n"
+	echo "####################################\n"
 	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
+		## bazel build is success
+		## building the wheel file...
 		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
-	fi
-	if ls -l  /workspace/ERROR.txt; then
-		mv /workspace/ERROR.txt /workspace/bins/ ;
+
+		if [[ $TEST_WHEEL_FILE = "y" ]]
+		then
+			echo "Testing wheel file...\n"
+		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd && cp *.whl /tmp/test_wheel 
+		    cd /tmp/test_wheel && pwd && ls -l
+		 
+		    (pip install *.whl) 2>&1 | tee -a TEST_WHEEL_FILE.log ; test ${PIPESTATUS[0]} -eq 0
+		    if (( $? )); then
+			    echo "####################################\n"
+				echo "      TEST_WHEEL_FILE  ERROR!!   	  \n"
+				echo "####################################\n"
+				echo "Unable to pip install the wheel file."
+			else
+				cd /tmp/test_wheel && pwd && ls -l
+				python -V
+			    (python -c $TEST_CMD) 2>&1 | tee -a TEST_WHEEL_FILE.log ; test ${PIPESTATUS[0]} -eq 0
+			    if (( $? )); then
+				    echo "####################################\n"
+					echo "      TEST_WHEEL_FILE  ERROR     	  \n"
+					echo "####################################\n"
+					echo "Tensorflow TEST_CMD Failed!"
+				else
+				    echo "####################################\n"
+					echo "      TEST_WHEEL_FILE  SUCCESS      \n"
+					echo "####################################\n"
+				fi
+			fi
+			if ls -l  /tmp/test_wheel/TEST_WHEEL_FILE.log; then
+				mv mv /tmp/test_wheel/TEST_WHEEL_FILE.log /workspace/bins ;
+			fi
+		fi #end test
+	fi #end wheel
+fi # end build
+if ls -l  /workspace/CUSTOM_BUILD.log; then
+	mv /workspace/CUSTOM_BUILD.log /workspace/bins/ ;
+fi
+
+
+### enable HOST_ON_HTTP_SERVER only which deployment config and NOT with Jobs. 
+if [[ $HOST_ON_HTTP_SERVER = "y" ]]
+then
+	echo "Starting httpserver to host the binary...\n"
+    cd /workspace/
+	if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
+		python -m SimpleHTTPServer $PORT ; 
+	else python -m http.server $PORT ; 
 	fi
 fi
 
 
-cd /workspace/
-if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
-	python -m SimpleHTTPServer $PORT ; 
-else python -m http.server $PORT ; 
-fi
- 
+
 
 
 
