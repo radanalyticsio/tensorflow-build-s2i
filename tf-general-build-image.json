@@ -96,7 +96,7 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}:latest"
+                        "name": "${APPLICATION_NAME}:${VERSION}"
                     }
                 },
                 "resources": {
@@ -154,6 +154,12 @@
             "name": "GENERIC_WEBHOOK_SECRET",
             "description": "A secret string used to configure the Generic webhook.",
             "value": "tf-build-secret",
+            "required": true
+        },
+        {
+            "name": "VERSION",
+            "description": "Version of the build image, i.e docker image tag",
+            "value": "latest",
             "required": true
         }
     ]
