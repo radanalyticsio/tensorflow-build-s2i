@@ -6,7 +6,7 @@
 # For more information see the documentation:
 #	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
 #
-
+echo "run...."
 echo "PORT = "$PORT
 echo "TF_NEED_JEMALLOC = "$TF_NEED_JEMALLOC
 echo "TF_NEED_GCP = "$TF_NEED_GCP
@@ -40,7 +40,19 @@ echo "JAVA_HOME = "$JAVA_HOME
 echo "PATH = "$PATH
 echo "TEST_LOOP = "$TEST_LOOP
 echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
+echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH
+echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH
+echo "PYTHON_BIN_PATH ="$PYTHON_BIN_PATH 
 
+
+
+if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
+	export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
+	echo $LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
+	echo $PYTHON_LIB_PATH ; fi 
+if [ "$NB_PYTHON_VER" = "3.6" ] ; then export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
+	echo $LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
+	echo $PYTHON_LIB_PATH  ; fi
 
 
 cd /workspace

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "ENTRYPOINT...."
 # Check whether there is a passwd entry for the container UID
 myuid=$(id -u)
 mygid=$(id -g)
@@ -16,5 +17,8 @@ fi
 
 echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> ~/.bashrc
 echo 'alias ll="ls -l"' >> ~/.bashrc
+# The git_ssh_command helps the server by pass the Host key checking while connecting to github.
+export GIT_SSH_COMMAND='ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no'
 # Execute the container CMD under tini for better hygiene
+echo "tini...."
 tini -s -- "$@"
