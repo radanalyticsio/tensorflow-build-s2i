@@ -15,7 +15,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appid": "tensorflow-build-image-${APPLICATION_NAME}",
+                    "appTypes": "tensorflow-build-image",
                     "appName": "${APPLICATION_NAME}"
                 }
             }
@@ -26,7 +26,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-s2i",
                 "labels": {
-                    "appid": "tensorflow-build-image-${APPLICATION_NAME}",
+                    "appTypes": "tensorflow-build-image",
                     "appName": "${APPLICATION_NAME}"
                 }
             },
@@ -48,7 +48,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appid": "tensorflow-build-image-${APPLICATION_NAME}",
+                    "appTypes": "tensorflow-build-image",
                     "appName": "${APPLICATION_NAME}"
                 }
             },

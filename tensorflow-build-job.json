@@ -15,7 +15,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appid": "tf-build-${APPLICATION_NAME}",
+                    "appTypes": "tensorflow-build-job",
                     "appName": "${APPLICATION_NAME}"
                 }
             },
@@ -23,7 +23,7 @@
                 "template": {
                     "metadata": {
                         "labels": {
-                            "appid": "tf-build-${APPLICATION_NAME}",
+                            "appTypes": "tensorflow-build-job",
                             "deploymentconfig": "${APPLICATION_NAME}",
                             "appName": "${APPLICATION_NAME}"
                         }
