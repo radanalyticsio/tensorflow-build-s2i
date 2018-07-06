@@ -2,27 +2,16 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "tf-build",
+        "name": "tensorflow-build-job",
         "annotations": {
-            "description": "tf-build",
+            "description": "Template to create a Job to build tensorflow wheel files.",
             "tags": "tf-app"
         }
     },
     "objects": [
         {
-            "kind": "ImageStream",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "labels": {
-                    "appid": "tf-build-${APPLICATION_NAME}",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            }
-        },
-        {
-            "kind": "BuildConfig",
-            "apiVersion": "v1",
+            "kind": "Job",
+            "apiVersion": "batch/v1",
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
@@ -31,79 +20,6 @@
                 }
             },
             "spec": {
-                "triggers": [
-                    {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange"
-                    },
-                    {
-                        "type": "Generic",
-                        "generic" : {
-                        	"secret": "${GENERIC_WEBHOOK_SECRET}"
-                        }
-                    }
-                ],
-                "source": {
-                    "type": "Git",
-                    "git": {
-                        "uri": "${SOURCE_REPOSITORY}"
-                    }
-                },
-                "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
-                        "from": {
-                            "kind": "ImageStreamTag",
-                            "name": "${BUILDER_IMAGESTREAM}"
-                        }
-                    }
-                },
-                "output": {
-                    "to": {
-                        "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}:latest"
-                    }
-                }
-            }
-        },
-        {
-            "kind": "DeploymentConfig",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "labels": {
-                    "appid": "tf-build-${APPLICATION_NAME}",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "strategy": {
-                    "type": "Rolling"
-                },
-                "triggers": [
-                    {
-                        "type": "ConfigChange"
-                    },
-                    {
-                        "type": "ImageChange",
-                        "imageChangeParams": {
-                            "automatic": true,
-                            "containerNames": [
-                                "${APPLICATION_NAME}"
-                            ],
-                            "from": {
-                                "kind": "ImageStreamTag",
-                                "name": "${APPLICATION_NAME}:latest"
-                            }
-                        }
-                    }
-                ],
-                "replicas": 1,
-                "selector": {
-                    "deploymentconfig": "${APPLICATION_NAME}"
-                },
                 "template": {
                     "metadata": {
                         "labels": {
@@ -116,10 +32,6 @@
                         "containers": [
                             {
                                 "env": [
-                                    {
-                                        "name": "PORT",
-                                        "value": "${PORT}"
-                                    },
                                     {
                                         "name": "CUSTOM_BUILD",
                                         "value": "${CUSTOM_BUILD}"
@@ -217,10 +129,6 @@
                                         "value": "${TF_SET_ANDROID_WORKSPACE}"
                                     },
                                     {
-                                        "name": "TEST_LOOP",
-                                        "value": "${TEST_LOOP}"
-                                    },
-                                    {
                                         "name": "NB_PYTHON_VER",
                                         "value": "${NB_PYTHON_VER}"
                                     },
@@ -231,79 +139,25 @@
                                     {
                                         "name": "TF_GIT_BRANCH",
                                         "value": "${TF_GIT_BRANCH}"
-                                    },
-                                    {
-                                        "name": "HOST_ON_HTTP_SERVER",
-                                        "value": "${HOST_ON_HTTP_SERVER}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
-                                "image": "${APPLICATION_NAME}:latest",
-                                "ports": [
-                                    {
-                                        "containerPort": 8080,
-                                        "protocol": "TCP"
-                                    }
-                                ],
-                               "resources": {
+                                "image": "${BUILDER_IMAGESTREAM}",
+                                "command": ["/entrypoint", "/usr/libexec/s2i/run"],
+                                "resources": {
                                     "limits": {
                                         "cpu": "6",
                                         "memory": "8Gi"
                                     },
                                     "requests": {
                                         "cpu": "3",
-                                        "memory": "4Gi"
+                                        "memory": "6Gi"
                                     }
                                 }
                             }
-                        ]
+                        ],
+						"restartPolicy": "Never"
                     }
-                }
-            }
-        },
-        {
-            "kind": "Service",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "labels": {
-                    "appid": "tf-build-${APPLICATION_NAME}",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "8080-tcp",
-                        "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
-                    }
-                ],
-                "selector": {
-                    "deploymentconfig": "${APPLICATION_NAME}"
-                }
-            }
-        },
-        {
-            "kind": "Route",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "labels": {
-                    "appid": "tf-build-${APPLICATION_NAME}",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "host": "",
-                "to": {
-                    "kind": "Service",
-                    "name": "${APPLICATION_NAME}",
-                    "weight": 100
-                },
-                "port": {
-                    "targetPort": "8080-tcp"
                 }
             }
         }
@@ -312,19 +166,13 @@
         {
             "name": "APPLICATION_NAME",
             "description": "The name of the application.",
-            "value": "tf-build",
+            "value": "tensorflow-build-job",
             "from": "[a-zA-Z0-9]{10}",
             "required": true
         },
         {
-            "name": "SOURCE_REPOSITORY",
-            "description": "Git repository for source.",
-            "value": "https://github.com/sub-mod/empty-repo.git",
-            "required": true
-        },
-        {
             "name": "BUILDER_IMAGESTREAM",
-            "description": "tf-fedora27-builder-image:latest, tf-fedora28-builder-image:latest, tf-rhel7-builder-image:latest",
+            "description": "tensorflow-build-image-fc27-36:latest, tensorflow-build-image-rhel75-36:2",
             "value": "",
             "required": true
         },
@@ -470,24 +318,6 @@
             "name": "TF_SET_ANDROID_WORKSPACE",
             "description": "TF_SET_ANDROID_WORKSPACE",
             "value": "0",
-            "required": true
-        },
-        {
-            "name": "TEST_LOOP",
-            "description": "(y or n).If y then start a while loop.USE ONLY with DeploymentConfig.If y then http won't start.",
-            "value": "n",
-            "required": false
-        },
-        {
-            "name": "HOST_ON_HTTP_SERVER",
-            "description": "(y or n)If y then http server.USE ONLY with DeploymentConfig",
-            "value": "y",
-            "required": true
-        },
-        {
-            "name": "PORT",
-            "description": "http server port.USE ONLY with DeploymentConfig",
-            "value": "8080",
             "required": true
         },
         {
