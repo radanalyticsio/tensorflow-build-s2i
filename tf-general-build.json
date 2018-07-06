@@ -231,8 +231,11 @@
                                     {
                                         "name": "TF_GIT_BRANCH",
                                         "value": "${TF_GIT_BRANCH}"
+                                    },
+                                    {
+                                        "name": "HOST_ON_HTTP_SERVER",
+                                        "value": "${HOST_ON_HTTP_SERVER}"
                                     }
-
                                 ],
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${APPLICATION_NAME}:latest",
@@ -320,15 +323,9 @@
             "required": true
         },
         {
-            "name": "PORT",
-            "description": "port",
-            "value": "8080",
-            "required": true
-        },
-        {
             "name": "BUILDER_IMAGESTREAM",
-            "description": "BUILDER_IMAGESTREAM",
-            "value": "tf-fedora27-builder-image:latest, tf-fedora28-builder-image:latest, tf-rhel7-builder-image:latest",
+            "description": "tf-fedora27-builder-image:latest, tf-fedora28-builder-image:latest, tf-rhel7-builder-image:latest",
+            "value": "",
             "required": true
         },
         {
@@ -477,9 +474,27 @@
         },
         {
             "name": "TEST_LOOP",
-            "description": "If y then test image with a while loop.Default is empty",
-            "value": "",
+            "description": "(y or n).If y then start a while loop.USE ONLY with DeploymentConfig.If y then http won't start.",
+            "value": "n",
             "required": false
+        },
+        {
+            "name": "HOST_ON_HTTP_SERVER",
+            "description": "(y or n)If y then http server.USE ONLY with DeploymentConfig",
+            "value": "y",
+            "required": true
+        },
+        {
+            "name": "PORT",
+            "description": "http server port.USE ONLY with DeploymentConfig",
+            "value": "8080",
+            "required": true
+        },
+        {
+            "name": "TEST_WHEEL_FILE",
+            "description": "(y or n)To run a simple test code to test wheel file.",
+            "value": "y",
+            "required": true
         },
         {
             "name": "NB_PYTHON_VER",
@@ -497,12 +512,6 @@
             "name": "TF_GIT_BRANCH",
             "description": "TF_GIT_BRANCH",
             "value": "r1.9",
-            "required": true
-        },
-        {
-            "name": "GENERIC_WEBHOOK_SECRET",
-            "description": "A secret string used to configure the Generic webhook.",
-            "value": "tf-build-secret",
             "required": true
         }
     ]

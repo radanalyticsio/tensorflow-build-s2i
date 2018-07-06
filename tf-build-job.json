@@ -143,7 +143,12 @@
                                     {
                                         "name": "TF_GIT_BRANCH",
                                         "value": "${TF_GIT_BRANCH}"
+                                    },
+                                    {
+                                        "name": "HOST_ON_HTTP_SERVER",
+                                        "value": "${HOST_ON_HTTP_SERVER}"
                                     }
+                                    
 
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -156,7 +161,7 @@
                                     },
                                     "requests": {
                                         "cpu": "3",
-                                        "memory": "4Gi"
+                                        "memory": "6Gi"
                                     }
                                 }
                             }
@@ -178,7 +183,7 @@
         {
             "name": "BUILDER_IMAGESTREAM",
             "description": "tf-fedora27-builder-image:latest, tf-fedora28-builder-image:latest, tf-rhel7-builder-image:latest",
-            "value": "docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-rhel75-builder-image-36",
+            "value": "docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-rhel75-builder-image-361:1",
             "required": true
         },
         {
@@ -353,6 +358,12 @@
             "name": "GENERIC_WEBHOOK_SECRET",
             "description": "A secret string used to configure the Generic webhook.",
             "value": "tf-build-secret",
+            "required": true
+        },
+        {
+        	"name": "HOST_ON_HTTP_SERVER",
+            "description": "Start http server to host the wheel file.",
+            "value": "n",
             "required": true
         }
     ]
