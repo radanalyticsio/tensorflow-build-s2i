@@ -2,10 +2,10 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "tf-s2i-build",
+        "name": "tensorflow-build-image",
         "annotations": {
-            "description": "tf-s2i-build",
-            "tags": "tf-s2i-build"
+            "description": "Template to build Tensorflow build images.",
+            "tags": "tensorflow-build-image"
         }
     },
     "objects": [
@@ -15,7 +15,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appid": "tf-s2i-build-${APPLICATION_NAME}",
+                    "appid": "tensorflow-build-image-${APPLICATION_NAME}",
                     "appName": "${APPLICATION_NAME}"
                 }
             }
@@ -26,7 +26,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}-s2i",
                 "labels": {
-                    "appid": "tf-s2i-build-${APPLICATION_NAME}",
+                    "appid": "tensorflow-build-image-${APPLICATION_NAME}",
                     "appName": "${APPLICATION_NAME}"
                 }
             },
@@ -48,7 +48,7 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appid": "tf-s2i-build-${APPLICATION_NAME}",
+                    "appid": "tensorflow-build-image-${APPLICATION_NAME}",
                     "appName": "${APPLICATION_NAME}"
                 }
             },
@@ -116,7 +116,7 @@
         {
             "name": "APPLICATION_NAME",
             "description": "The name of the application.",
-            "value": "tf-general-builder-image",
+            "value": "tensorflow-build-image",
             "from": "[a-zA-Z0-9]{10}",
             "required": true
         },
@@ -140,7 +140,7 @@
         },
         {
             "name": "NB_PYTHON_VER",
-            "description": "Python version 2.7,3.5,3.6 .",
+            "description": "Python version 2.7,3.5,3.6 ",
             "value": "3.6",
             "required": true
         },
