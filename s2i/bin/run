@@ -44,16 +44,19 @@ echo "PYTHON_BIN_PATH ="$PYTHON_BIN_PATH
 ### These ENVs are used in build/publish logic
 echo "PORT = "$PORT
 echo "BUILD_OPTS = "$BUILD_OPTS
+echo "CUSTOM_BUILD = "$CUSTOM_BUILD
 echo "TEST_LOOP = "$TEST_LOOP
 echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
 echo "NB_PYTHON_VER = "$NB_PYTHON_VER
 echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
-echo "CUSTOM_BUILD = "$CUSTOM_BUILD
+echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
 
 
  
+TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
+	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
+	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
 
-TEST_CMD="import tensorflow as tf;a=tf.constant([1.0,2.0,3.0,4.0,5.0,6.0],shape=[2,3],name='a');b=tf.constant([1.0,2.0,3.0,4.0,5.0,6.0],shape=[3,2],name='b');c=tf.matmul(a,b);sess=tf.Session(config=tf.ConfigProto(log_device_placement=True));print(sess.run(c))"
 
 
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
@@ -81,13 +84,13 @@ fi
 
 ### git clone tf
 cd /workspace
-echo "####################################\n"
-echo "      clone git repo.....       	  \n"
-echo "####################################\n"
+echo "####################################"
+echo "      clone git repo.....       	  "
+echo "####################################"
 git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
-echo "####################################\n"
-echo "      configure.....       	      \n"
-echo "####################################\n"
+echo "####################################"
+echo "      configure.....       	      "
+echo "####################################"
 ./configure
 
 
@@ -101,9 +104,9 @@ echo "PATH = "$PATH
 ###########################
 echo "TF_NEED_CUDA = "$TF_NEED_CUDA
 if [ $TF_NEED_CUDA = "1" ]; then 
-	echo "####################################\n"
-	echo "      CUDA BUILD TODO.....       	  \n"
-	echo "####################################\n"
+	echo "####################################"
+	echo "      CUDA BUILD TODO.....       	  "
+	echo "####################################"
 	exit 1;
 	#cd /workspace/serving/tensorflow
 	#sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
@@ -120,9 +123,9 @@ fi
 ### enable TEST_LOOP only which deployment config and NOT with Jobs. 
 if [[ $TEST_LOOP = "y" ]]
 then
-	echo "####################################\n"
-	echo "      DEV/TEST MODE.....       	   \n"
-	echo "####################################\n"
+	echo "####################################"
+	echo "      DEV/TEST MODE.....       	  "
+	echo "####################################"
     echo "Starting a infinite while loop to debug in console terminal\n"
     while :
 	do
@@ -132,61 +135,94 @@ then
 fi
 
 
-echo "####################################\n"
-echo "      CUSTOM_BUILD.....       	  \n"
-echo "####################################\n"
+echo "####################################"
+echo "      CUSTOM_BUILD.....       	  "
+echo "####################################"
 cd /workspace
 mkdir -p /workspace/bins
 
-eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/CUSTOM_BUILD.log ; test ${PIPESTATUS[0]} -eq 0
+eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/build.log ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
-    echo "####################################\n"
-	echo "      CUSTOM_BUILD  ERROR!!     	  \n"
-	echo "####################################\n"
+    echo "####################################"
+	echo "      CUSTOM_BUILD  ERROR!!     	  "
+	echo "####################################"
 else
-	echo "####################################\n"
-	echo "      CUSTOM_BUILD  SUCCESS     	  \n"
-	echo "####################################\n"
+	echo "####################################"
+	echo "      CUSTOM_BUILD  SUCCESS     	  "
+	echo "####################################"
 	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
 		## bazel build is success
 		## building the wheel file...
+		rm -fr /workspace/bins/tensorflow*
 		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
 
 		if [[ $TEST_WHEEL_FILE = "y" ]]
 		then
 			echo "Testing wheel file...\n"
-		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd && cp *.whl /tmp/test_wheel 
-		    cd /tmp/test_wheel && pwd && ls -l
+		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd && rm -fr /tmp/test_wheel/tensorflow*
+		    cp *.whl /tmp/test_wheel && cd /tmp/test_wheel && pwd && ls -l 
+		    
 		 
-		    (pip install *.whl) 2>&1 | tee -a TEST_WHEEL_FILE.log ; test ${PIPESTATUS[0]} -eq 0
+		    (pip install *.whl --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
 		    if (( $? )); then
-			    echo "####################################\n"
-				echo "      TEST_WHEEL_FILE  ERROR!!   	  \n"
-				echo "####################################\n"
+			    echo "####################################"
+				echo "      TEST_WHEEL_FILE  ERROR!!   	  "
+				echo "####################################"
 				echo "Unable to pip install the wheel file."
 			else
 				cd /tmp/test_wheel && pwd && ls -l
 				python -V
-			    (python -c $TEST_CMD) 2>&1 | tee -a TEST_WHEEL_FILE.log ; test ${PIPESTATUS[0]} -eq 0
+			    (python -c "$TEST_CMD") 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
 			    if (( $? )); then
-				    echo "####################################\n"
-					echo "      TEST_WHEEL_FILE  ERROR     	  \n"
-					echo "####################################\n"
+				    echo "####################################"
+					echo "      TEST_WHEEL_FILE  ERROR     	  "
+					echo "####################################"
 					echo "Tensorflow TEST_CMD Failed!"
 				else
-				    echo "####################################\n"
-					echo "      TEST_WHEEL_FILE  SUCCESS      \n"
-					echo "####################################\n"
+				    echo "####################################"
+					echo "      TEST_WHEEL_FILE  SUCCESS      "
+					echo "####################################"
+					echo "Changing METADATA..."
+					{
+						cd /tmp/test_wheel
+						unzip -xvf *.whl |grep METADATA
+						unzip -q *.whl
+						ls -l *.dist-info/
+						echo
+						echo "METADATA..."
+						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA 
+						sed -i "s/Platform.*/Platform: $(cat /etc/redhat-release)\\nKernel: $(uname -or |awk '{print $1;}')/" *.dist-info/METADATA
+						sed -i "s/Author-email:.*/Author-email: smodeel@redhat.com/" *.dist-info/METADATA
+						sed -i "s/Author:.*/Author: Red Hat Inc./" *.dist-info/METADATA
+						
+						DISCLAIMER="$(cat <<-EOF
+						Disclaimer: Following wheel files are created by Red Hat AICoE experimental builds and are without any support.
+						There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+						EOF
+						)"
+						echo "$DISCLAIMER" >> *.dist-info/METADATA
+						zip -u *.whl *.dist-info/*
+						rm -fr *.dist-info/
+						rm -fr *.data/
+						unzip -q *.whl
+						echo
+						echo "New METADATA..."
+						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA 
+						mv /workspace/bins/*.whl /workspace/bins/older.whl.bkp
+						cp *.whl /workspace/bins/
+						pip uninstall tensorflow -y
+						pip install /workspace/bins/*.whl
+					} | tee -a test_wheel.log 
 				fi
 			fi
-			if ls -l  /tmp/test_wheel/TEST_WHEEL_FILE.log; then
-				mv mv /tmp/test_wheel/TEST_WHEEL_FILE.log /workspace/bins ;
+			if ls -l  /tmp/test_wheel/test_wheel.log; then
+				mv /tmp/test_wheel/test_wheel.log /workspace/bins ;
 			fi
 		fi #end test
 	fi #end wheel
 fi # end build
-if ls -l  /workspace/CUSTOM_BUILD.log; then
-	mv /workspace/CUSTOM_BUILD.log /workspace/bins/ ;
+if ls -l  /workspace/build.log; then
+	mv /workspace/build.log /workspace/bins/ ;
 fi
 
 
@@ -200,8 +236,6 @@ then
 	else python -m http.server $PORT ; 
 	fi
 fi
-
-
 
 
 
