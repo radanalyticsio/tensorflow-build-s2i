@@ -57,13 +57,19 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 
  
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
-	export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
-	echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
-	echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ; fi 
+	if [[ `cat /etc/redhat-release` = *"ed Hat Enterprise Linux Server"* ]] ; then 
+		export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ; 
+	fi
+fi 
 if [ "$NB_PYTHON_VER" = "3.6" ] ; then 
-	export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
-	echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
-	echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  ; fi
+	if [[ `cat /etc/redhat-release` = *"ed Hat Enterprise Linux Server"* ]] ; then 
+		export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  ; 
+	fi
+fi
 
 
 
