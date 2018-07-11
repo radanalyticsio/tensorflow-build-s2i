@@ -357,6 +357,12 @@
             "description": "GIT_TOKEN",
             "value": "",
             "required": true
+        },
+        {
+            "name": "GIT_DEST_REPO",
+            "description": "GIT_DEST_REPO",
+            "value": "https://github.com/AICoE/wheels.git",
+            "required": true
         }
     ]
 }

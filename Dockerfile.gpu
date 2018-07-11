@@ -162,7 +162,7 @@ RUN mkdir -p /tf \
     && pip install -U setuptools \
     && pip install enum34 futures mock six pixiedust pillow \
     && pip install 'protobuf>=3.0.0a3' \
-    #&& pip install -i https://testpypi.python.org/simple --pre grpcio \
+    #&& pip install -i https://testpypi.python.org/simple --pre grpcio pyyaml \
     && pip install grpcio_tools mock tensorflow-serving-api \
     && mkdir -p /tf/tools \
     && cd /tf/tools \

@@ -50,6 +50,8 @@ echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
 echo "NB_PYTHON_VER = "$NB_PYTHON_VER
 echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
 echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
+echo "GIT_DEST_REPO = "$GIT_DEST_REPO
+
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
 	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
@@ -216,8 +218,8 @@ else
 						whlff=$(basename `ls  *.whl` .whl )
 						mv /workspace/bins/*.whl /workspace/bins/$whlff.whl.bkp
 						cp *.whl /workspace/bins/
-						pip uninstall tensorflow -y
-						pip install /workspace/bins/*.whl
+						pip uninstall tensorflow -y 
+						pip install /workspace/bins/*.whl --user
 						ls -l /workspace/bins
 						#release
 						#cp /tmp/test/*.sh /build_tools/
@@ -227,10 +229,11 @@ else
 						mkdir -p /tmp/release_dir
 						cd /tmp/release_dir/
 						pwd
-						cp /tmp/test/*.sh .
-						cp /tmp/test/*.py .
+						cp /build_tools/*.sh .
+						cp /build_tools/*.py .
+						#cp /tmp/test/*.py .
 						#cp /build_tools/* .
-						git clone https://github.com/AICoE/wheels.git
+						git clone $GIT_DEST_REPO
 						ls -l
 						source print_build_info.sh
 
