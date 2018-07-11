@@ -108,13 +108,21 @@ if command_exists nvcc; then
   CUDA_TOOLKIT_VER=$(nvcc -V | grep release | awk '{print $(NF)}')
 fi
 
-
-
 cat <<EOF > /tmp/check_tf.py
-import tensorflow as tf;
-print("tf.VERSION = %s" % tf.VERSION)
-print("tf.GIT_VERSION = %s" % tf.GIT_VERSION)
-print("tf.COMPILER_VERSION = %s" % tf.GIT_VERSION)
+from __future__ import print_function
+import imp
+import sys
+try:
+	imp.find_module('tensorflow')
+	import tensorflow as tf;
+	print("tf.VERSION = %s" % tf.VERSION)
+	print("tf.GIT_VERSION = %s" % tf.GIT_VERSION)
+	print("tf.COMPILER_VERSION = %s" % tf.GIT_VERSION)
+except ImportError:
+	print("tf.VERSION = ")
+	print("tf.GIT_VERSION = ")
+	print("tf.COMPILER_VERSION = ")
+	
 EOF
 check_tf="$(python /tmp/check_tf.py >&1)"
 check_tf="${check_tf// = /=}"
@@ -141,8 +149,8 @@ BUILD_ENVs+="\"PORT\": \"${PORT}\","
 BUILD_ENVs+="\"BUILD_OPTS\": \"${BUILD_OPTS}\","
 BUILD_ENVs+="\"NB_PYTHON_VER\": \"${NB_PYTHON_VER}\","
 BUILD_ENVs+="\"HOST_ON_HTTP_SERVER\": \"${HOST_ON_HTTP_SERVER}\","
-BUILD_ENVs+="\"TEST_WHEEL_FILE\": \"${TEST_WHEEL_FILE}\","
-
+BUILD_ENVs+="\"TEST_WHEEL_FILE\": \"${TEST_WHEEL_FILE}\"," 
+BUILD_ENVs+="\"GIT_DEST_REPO\": \"${GIT_DEST_REPO}\","
 
 unset IFS
 TF_ENVs=""

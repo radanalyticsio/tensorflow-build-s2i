@@ -140,7 +140,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 RUN mkdir -p /tf \
     && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -U setuptools \
-    && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow \
+    && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow pyyaml \
     && mkdir -p /tf/tools \
     && cd /tf/tools \
     && wget -q https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
