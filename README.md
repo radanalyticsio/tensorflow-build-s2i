@@ -43,16 +43,28 @@ Following should be left blank.
 
 
 ## Usage
+To create tf build image
 ```
-oc create -f template.json
+oc new-app --template=tf-s2i-build  --param=APPLICATION_NAME=tf-rhel75-builder-image-36 --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7   --param=DOCKER_FILE_PATH=Dockerfile.rhel75 --param=NB_PYTHON_VER=3.6 --param=VERSION=2
+
+ oc new-app --template=tf-s2i-build  --param=APPLICATION_NAME=tf-fedora28-builder-image-36 --param=S2I_IMAGE=registry.fedoraproject.org/f28/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora28 --param=NB_PYTHON_VER=3.6 --param=VERSION=1
+
+oc new-app --template=tf-s2i-build  --param=APPLICATION_NAME=tf-fedora27-builder-image-36 --param=S2I_IMAGE=registry.fedoraproject.org/f27/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora27 --param=NB_PYTHON_VER=3.6 --param=VERSION=1
+
 ```
 OR
 Import the template into your namespace from Openshift UI.
 
 
-To create with tf binary for CPU :
+To create with tf wheel for CPU :
 ```
-oc new-app --template tf-build"
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-build-rh75-361 --param=BUILDER_IMAGESTREAM=docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-rhel75-builder-image-36:2  --param=NB_PYTHON_VER=3.6  --param=GIT_TOKEN=
+
+
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-build-fc28-36 --param=BUILDER_IMAGESTREAM=docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-fedora28-builder-image-36:1  --param=NB_PYTHON_VER=3.6  --param=GIT_TOKEN=
+
+
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-build-fc27-36 --param=BUILDER_IMAGESTREAM=docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-fedora27-builder-image-36:1  --param=NB_PYTHON_VER=3.6  --param=GIT_TOKEN=
 ```
 OR
 Create the Application from the template.
