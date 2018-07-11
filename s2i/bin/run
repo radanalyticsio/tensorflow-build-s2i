@@ -51,14 +51,11 @@ echo "NB_PYTHON_VER = "$NB_PYTHON_VER
 echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
 echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
 
-
- 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
 	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
 	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
 
-
-
+ 
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
 	export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 	echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
@@ -67,7 +64,6 @@ if [ "$NB_PYTHON_VER" = "3.6" ] ; then
 	export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
 	echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
 	echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  ; fi
-
 
 
 
@@ -153,13 +149,16 @@ else
 	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
 		## bazel build is success
 		## building the wheel file...
+		## cleanup old
 		rm -fr /workspace/bins/tensorflow*
 		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
 
 		if [[ $TEST_WHEEL_FILE = "y" ]]
 		then
 			echo "Testing wheel file...\n"
-		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd && rm -fr /tmp/test_wheel/tensorflow*
+		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd
+		    ## cleanup old
+		    rm -fr /tmp/test_wheel/tensorflow*
 		    cp *.whl /tmp/test_wheel && cd /tmp/test_wheel && pwd && ls -l 
 		    
 		 
@@ -207,11 +206,56 @@ else
 						unzip -q *.whl
 						echo
 						echo "New METADATA..."
-						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA 
-						mv /workspace/bins/*.whl /workspace/bins/older.whl.bkp
+						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA
+						whlff=$(basename `ls  *.whl` .whl )
+						mv /workspace/bins/*.whl /workspace/bins/$whlff.whl.bkp
 						cp *.whl /workspace/bins/
 						pip uninstall tensorflow -y
 						pip install /workspace/bins/*.whl
+						ls -l /workspace/bins
+						#release
+						#cp /tmp/test/*.sh /build_tools/
+						#cp /tmp/test/*.py /build_tools/
+						echo "Releasing ......."
+						rm -fr /tmp/release_dir
+						mkdir -p /tmp/release_dir
+						cd /tmp/release_dir/
+						pwd
+						cp /tmp/test/*.sh .
+						cp /tmp/test/*.py .
+						#cp /build_tools/* .
+						git clone https://github.com/AICoE/wheels.git
+						ls -l
+						source print_build_info.sh
+
+						ls -l
+
+						mv build_info.yaml /workspace/bins/
+						ls -l
+
+						cp /workspace/bins/build_info.yaml /tmp/release_dir/
+						cp /workspace/bins/*.whl /tmp/release_dir/
+						whlff=$(basename `ls *.whl`)
+						cd wheels
+						ls -l
+						if [ $TF_NEED_CUDA = "1" ]; then
+						GIT_TAG="tf-${TF_GIT_BRANCH}-gpu$(date +%Y-%m-%d_%H%M%S)"
+						else
+						GIT_TAG="tf-${TF_GIT_BRANCH}-cpu$(date +%Y-%m-%d_%H%M%S)"
+						fi
+						NOTES=$(python /tmp/release_dir/utils.py /tmp/release_dir/build_info.yaml)
+						GIT_TOKEN="${GIT_TOKEN}"
+						FILES="../${whlff} ../build_info.yaml"
+						echo "========================="
+						echo $GIT_TAG
+						echo $FILES
+						echo $NOTES
+						echo "========================="
+						#source /tmp/release_dir/tf_env_collect.sh
+						#mv tf_env.txt /workspace/bins/
+						#cp /workspace/bins/tf_env.txt /tmp/release_dir/
+						source ../release.sh "${GIT_TAG}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+
 					} | tee -a test_wheel.log 
 				fi
 			fi

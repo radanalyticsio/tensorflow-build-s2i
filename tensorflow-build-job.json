@@ -139,6 +139,14 @@
                                     {
                                         "name": "TF_GIT_BRANCH",
                                         "value": "${TF_GIT_BRANCH}"
+                                    },
+                                    {
+                                        "name": "TEST_WHEEL_FILE",
+                                        "value": "${TEST_WHEEL_FILE}"
+                                    },
+                                    {
+                                        "name": "GIT_TOKEN",
+                                        "value": "${GIT_TOKEN}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -342,6 +350,12 @@
             "name": "TF_GIT_BRANCH",
             "description": "TF_GIT_BRANCH",
             "value": "r1.9",
+            "required": true
+        },
+        {
+            "name": "GIT_TOKEN",
+            "description": "GIT_TOKEN",
+            "value": "",
             "required": true
         }
     ]
