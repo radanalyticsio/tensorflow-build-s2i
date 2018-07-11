@@ -29,6 +29,7 @@ die() {
 echo "Collecting system information..."
 
 OUTPUT_FILE=tf_env.txt
+rm -fr ${OUTPUT_FILE}
 python_bin_path=$(which python || which python3 || die "Cannot find Python binary")
 
 {
@@ -113,6 +114,7 @@ with tf.Session() as sess:
 EOF
 ${python_bin_path} /tmp/check_tf.py 2>&1  >> ${OUTPUT_FILE}
 
+
 DEBUG_LD=libs ${python_bin_path} -c "import tensorflow"  2>>${OUTPUT_FILE} > /tmp/loadedlibs
 
 {
@@ -135,23 +137,6 @@ DEBUG_LD=libs ${python_bin_path} -c "import tensorflow"  2>>${OUTPUT_FILE} > /tm
   echo '== nvidia-smi ==================================================='
   nvidia-smi 2>&1
   
-  python -c "from __future__ import print_function; import os;import sys ; import platform;\
-	print( '=======Environment Markers========');\
-	print( '');\
-	print( 'export os_name='+os.name);\
-	print( 'export sys_platform='+sys.platform);\
- 	print( 'export platform_machine='+platform.machine());\
- 	print( 'export platform_python_implementation='+platform.python_implementation());\
- 	print( 'export platform_release='+platform.release());\
- 	print( 'export platform_system='+platform.system());\
- 	print( 'export platform_version='+platform.version());\
- 	print( 'export platform.machine='+platform.machine());\
- 	print( 'export python_version='+platform.python_version()[:3]);\
- 	print( 'export python_full_version='+platform.python_version());\
- 	print('export implementation_name='+sys.implementation.name) if 'implementation' in dir(sys) else print('export implementation_name=');\
- 	print( '');\
- 	print( '=======Environment Markers========');"
-
   echo
   cat /workspace/.tf_configure.bazelrc
   echo
@@ -166,9 +151,5 @@ find /usr/local -type f -name 'libudnn*'  2>/dev/null | grep cuda |  grep -v "\\
 mv $OUTPUT_FILE old-$OUTPUT_FILE
 grep -v -i google old-${OUTPUT_FILE} > $OUTPUT_FILE
 
-echo "Wrote environment to ${OUTPUT_FILE}. You can review the contents of that file."
-echo "and use it to populate the fields in the github issue template."
-echo
-echo "cat ${OUTPUT_FILE}"
-echo
+
 
