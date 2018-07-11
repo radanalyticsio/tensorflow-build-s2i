@@ -235,6 +235,18 @@
                                     {
                                         "name": "HOST_ON_HTTP_SERVER",
                                         "value": "${HOST_ON_HTTP_SERVER}"
+                                    },
+                                    {
+                                        "name": "TEST_WHEEL_FILE",
+                                        "value": "${TEST_WHEEL_FILE}"
+                                    },
+                                    {
+                                        "name": "GIT_TOKEN",
+                                        "value": "${GIT_TOKEN}"
+                                    },
+                                    {
+                                        "name": "GIT_DEST_REPO",
+                                        "value": "${GIT_DEST_REPO}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -512,6 +524,18 @@
             "name": "TF_GIT_BRANCH",
             "description": "TF_GIT_BRANCH",
             "value": "r1.9",
+            "required": true
+        },
+        {
+            "name": "GIT_TOKEN",
+            "description": "GIT_TOKEN",
+            "value": "",
+            "required": true
+        },
+        {
+            "name": "GIT_DEST_REPO",
+            "description": "GIT_DEST_REPO",
+            "value": "https://github.com/AICoE/wheels.git",
             "required": true
         }
     ]
