@@ -13,6 +13,11 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.tags="builder,python,tf-build" \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
+# DONOT uncomment. uncomment for dev.
+ARG BAZEL_VERSION=0.11.0
+ARG NB_PYTHON_VER=3.6
+ENV BAZEL_VERSION=$BAZEL_VERSION
+ENV NB_PYTHON_VER=$NB_PYTHON_VER
 
 # Not essential, but wise to set the lang
 # Note: Users with other languages should set this in their derivative image
@@ -22,15 +27,15 @@ ENV LC_ALL=""
 ENV PYTHONIOENCODING UTF-8
 ENV NB_USER=default
 ENV NB_UID=1001
-ENV NB_PYTHON_VER=2.7
+#### ENV NB_PYTHON_VER=DONOT UNCOMMENT
 ENV PYTHON_BIN_PATH=/usr/bin/python 
 ENV TINI_VERSION=v0.16.1 
 
 ## Bazel
-ENV PYTHON_LIB_PATH=/usr/lib64/python2.7/site-packages
+ENV PYTHON_LIB_PATH=/usr/lib64/python$NB_PYTHON_VER/site-packages
 ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
-ENV BAZEL_VERSION 0.11.0
+#### ENV BAZEL_VERSION = DONOT UNCOMMENT
 ################################################
 ## Tensorflow ./configure options for Bazel
 ################################################
@@ -59,15 +64,19 @@ ADD build_tools /build_tools
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
+    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
+    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
+    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
     && yum install -y epel-release \
-    && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip protobuf-compiler \
+    && yum install -y tar tree git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip protobuf-compiler \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
-    && yum install -y gcc gcc-c++ glibc-devel openssl-devel procps \
+    && yum install -y gcc gcc-c++ glibc-devel openssl-devel \
+    && yum install -y which findutils x86info cpuid dmidecode procps \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq3-devel \
-    && yum install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip python-devel \
+    && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip python-devel \
     && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \

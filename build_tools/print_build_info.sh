@@ -22,6 +22,7 @@
 #
 # Usage:
 #   should be run within tensorflow workspace
+#	should run only after tensorflow wheel file is created
 
 # Information about the command
 COMMAND=("$@")
@@ -151,6 +152,8 @@ BUILD_ENVs+="\"NB_PYTHON_VER\": \"${NB_PYTHON_VER}\","
 BUILD_ENVs+="\"HOST_ON_HTTP_SERVER\": \"${HOST_ON_HTTP_SERVER}\","
 BUILD_ENVs+="\"TEST_WHEEL_FILE\": \"${TEST_WHEEL_FILE}\"," 
 BUILD_ENVs+="\"GIT_DEST_REPO\": \"${GIT_DEST_REPO}\","
+BUILD_ENVs+="\"CUSTOM_BUILD\": \"${CUSTOM_BUILD}\","
+
 
 unset IFS
 TF_ENVs=""
@@ -160,6 +163,12 @@ TF_ENVs=$(env -0  | while IFS='=' read -r -d '' n v; do
 	fi;
 done)
 
+A=$(gcc -march=native -Q --help=target|grep march)
+ARCH=$(echo "${A##* }" | tr -s [:space:] | sed -e 's/^\s*//' -e '/^$/d')
+
+GCC_FLAGSS=$(gcc -### -E - -march=native 2>&1 | sed -r '/cc1/!d;s/(")|(^.* - )|( -mno-[^\ ]+)//g')
+
+CPUINFO_FLAGS=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]')
 
 # Print info
 TF_BUILD_INFO="{
@@ -183,10 +192,11 @@ TF_BUILD_INFO="{
 \"CUDA_device_count\": \""${CUDA_DEVICE_COUNT}"\",
 \"CUDA_device_names\": \""${CUDA_DEVICE_NAMES}"\",
 \"CUDA_toolkit_version\": \""${CUDA_TOOLKIT_VER}"\",
-"${CHECK_TF}"
+\"GCC_FLAGS\": \""${GCC_FLAGSS}"\",
+\"CPUINFO_FLAGS\": \""${CPUINFO_FLAGS}"\",
 "${BUILD_ENVs}"
 "${TF_ENVs}"
-\"CUDA_toolkit_version1\": \""${CUDA_TOOLKIT_VER}"\"
+\"march\": \""${ARCH}"\"
 }"
 
 echo -e $TF_BUILD_INFO

@@ -78,6 +78,8 @@ fi
 ### Setup Bazel
 cd /workspace
 command_exists () { type "$1" &> /dev/null ; }
+file_exists () { test -f $1 ; }
+folder_exists () { test -d $1 ; }
 if command_exists bazel ; then 
 	echo "bazel command exists."; 
 else 
@@ -139,11 +141,17 @@ then
 fi
 
 
+# /workspace/bins is final location of binaries
+# /workspace/bins
+#`/workspace/bins
 echo "####################################"
 echo "      CUSTOM_BUILD.....       	  "
 echo "####################################"
 cd /workspace
 mkdir -p /workspace/bins
+cp /build_tools/*.sh .
+source print_build_info.sh
+mv build_info.yaml /workspace/bins/
 
 eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/build.log ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
@@ -163,11 +171,15 @@ else
 
 		if [[ $TEST_WHEEL_FILE = "y" ]]
 		then
-			echo "Testing wheel file...\n"
+			echo "####################################"
+			echo "      Testing wheel file... 	      "
+			echo "####################################"
 		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd
 		    ## cleanup old
 		    rm -fr /tmp/test_wheel/tensorflow*
-		    cp *.whl /tmp/test_wheel && cd /tmp/test_wheel && pwd && ls -l 
+		    rm -fr /tmp/test_wheel/*.yaml
+		    cp /workspace/bins/*.whl /tmp/test_wheel && cp /workspace/bins/*.yaml /tmp/test_wheel 
+		    cd /tmp/test_wheel && pwd && ls -l 
 		    
 		 
 		    (pip install *.whl --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
@@ -208,6 +220,7 @@ else
 						EOF
 						)"
 						echo "$DISCLAIMER" >> *.dist-info/METADATA
+						cp build_info.yaml *.dist-info/
 						zip -u *.whl *.dist-info/*
 						rm -fr *.dist-info/
 						rm -fr *.data/
@@ -215,6 +228,7 @@ else
 						echo
 						echo "New METADATA..."
 						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA
+						ls -l *.dist-info/METADATA | grep build_info.yaml
 						whlff=$(basename `ls  *.whl` .whl )
 						mv /workspace/bins/*.whl /workspace/bins/$whlff.whl.bkp
 						cp *.whl /workspace/bins/
@@ -222,48 +236,31 @@ else
 						pip install /workspace/bins/*.whl --user
 						ls -l /workspace/bins
 						#release
-						#cp /tmp/test/*.sh /build_tools/
-						#cp /tmp/test/*.py /build_tools/
-						echo "Releasing ......."
+						echo "####################################"
+						echo "      Releasing...			      "
+						echo "####################################"
 						rm -fr /tmp/release_dir
 						mkdir -p /tmp/release_dir
 						cd /tmp/release_dir/
 						pwd
 						cp /build_tools/*.sh .
 						cp /build_tools/*.py .
-						#cp /tmp/test/*.py .
-						#cp /build_tools/* .
 						git clone $GIT_DEST_REPO
-						ls -l
-						source print_build_info.sh
-
-						ls -l
-
-						mv build_info.yaml /workspace/bins/
-						ls -l
-
 						cp /workspace/bins/build_info.yaml /tmp/release_dir/
 						cp /workspace/bins/*.whl /tmp/release_dir/
+						ls -l
 						whlff=$(basename `ls *.whl`)
 						cd wheels
 						ls -l
 						if [ $TF_NEED_CUDA = "1" ]; then
-						GIT_TAG="tf-${TF_GIT_BRANCH}-gpu$(date +%Y-%m-%d_%H%M%S)"
+						GIT_TAG="tf-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
 						else
-						GIT_TAG="tf-${TF_GIT_BRANCH}-cpu$(date +%Y-%m-%d_%H%M%S)"
+						GIT_TAG="tf-${TF_GIT_BRANCH}-cpu-$(date +%Y-%m-%d_%H%M%S)"
 						fi
 						NOTES=$(python /tmp/release_dir/utils.py /tmp/release_dir/build_info.yaml)
 						GIT_TOKEN="${GIT_TOKEN}"
 						FILES="../${whlff} ../build_info.yaml"
-						echo "========================="
-						echo $GIT_TAG
-						echo $FILES
-						echo $NOTES
-						echo "========================="
-						#source /tmp/release_dir/tf_env_collect.sh
-						#mv tf_env.txt /workspace/bins/
-						#cp /workspace/bins/tf_env.txt /tmp/release_dir/
-						source ../release.sh "${GIT_TAG}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+						source ../release.sh "${GIT_TAG}" "${GIT_TAG}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
 
 					} | tee -a test_wheel.log 
 				fi
@@ -290,7 +287,9 @@ then
 	fi
 fi
 
-
+						#source /tmp/release_dir/tf_env_collect.sh
+						#mv tf_env.txt /workspace/bins/
+						#cp /workspace/bins/tf_env.txt /tmp/release_dir/
 
 
 
