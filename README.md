@@ -43,29 +43,62 @@ Following should be left blank.
 
 
 ## Usage
-To create tf build image
+###To create tf build image
 ```
-oc new-app --template=tf-s2i-build  --param=APPLICATION_NAME=tf-rhel75-builder-image-36 \
+oc new-app --template=tf-s2i-build  
+--param=APPLICATION_NAME=tf-rhel75-builder-image-36 --param=VERSION=2 \
 --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7  \
---param=DOCKER_FILE_PATH=Dockerfile.rhel75 --param=VERSION=2 \
+--param=DOCKER_FILE_PATH=Dockerfile.rhel75  \
 --param=NB_PYTHON_VER=3.6 
 
 ```
+The above command creates a builder image `APPLICATION_NAME:VERSION` for specific OS.
+
+The values for `S2I_IMAGE` are :
+- Fedora26- `registry.fedoraproject.org/f26/s2i-core`
+- Fedora27- `registry.fedoraproject.org/f27/s2i-core`
+- Fedora27- `registry.fedoraproject.org/f28/s2i-core`
+- RHEL7.5- `registry.access.redhat.com/rhscl/s2i-core-rhel7`
+- Centos7- `openshift/base-centos7`
+
+The values for `DOCKER_FILE_PATH` are :
+- Fedora26- `Dockerfile.fedora27,`
+- Fedora27- `Dockerfile.fedora27,`
+- Fedora27- `Dockerfile.fedora27,`
+- RHEL7.5- `Dockerfile.rhel75`
+- Centos7- `Dockerfile.centos7`
+
+
 OR
 Import the template into your namespace from Openshift UI.
 
 
-To create with tf wheel for CPU :
+###To create with tf wheel for CPU :
 ```
-oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-build-rh75-36 \
+oc new-app --template=tensorflow-build-job  
+--param=APPLICATION_NAME=tf-build-rh75-36 \
 --param=BUILDER_IMAGESTREAM=docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-rhel75-builder-image-36:2  \
---param=NB_PYTHON_VER=3.6  --param=GIT_TOKEN=
-
+--param=NB_PYTHON_VER=3.6  \
+--param=GIT_DEST_REPO=https://github.com/AICoE/wheels.git  \
+--param=GIT_TOKEN=
 
 ```
+`NOTE BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION from first command` 
+
 OR
 Create the Application from the template.
 The tensorflow wheel file will be available by clicking on the route.It is located in the bin folder.
+
+###To create dev environment for creating tf wheel for CPU :
+```
+oc new-app --template=tensorflow-build-dc  
+--param=APPLICATION_NAME=tf-build-rh75-36 \
+--param=BUILDER_IMAGESTREAM=docker-registry.default.svc:5000/dh-prod-analytics-factory/tf-rhel75-builder-image-36:2  \
+--param=NB_PYTHON_VER=3.6  \
+--param=TEST_LOOP=y
+
+```
+`NOTE BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION from first command` 
 
 
 Note : GPU is not yet supported.

@@ -228,7 +228,7 @@ else
 						echo
 						echo "New METADATA..."
 						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA
-						ls -l *.dist-info/METADATA | grep build_info.yaml
+						ls -l *.dist-info | grep build_info.yaml
 						whlff=$(basename `ls  *.whl` .whl )
 						mv /workspace/bins/*.whl /workspace/bins/$whlff.whl.bkp
 						cp *.whl /workspace/bins/
