@@ -72,11 +72,12 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && python$NB_PYTHON_VER get-pip.py \
-    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg procps \
+    && python$NB_PYTHON_VER get-pip.py procps \
+    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg  \
+    && dnf install -y which findutils x86info cpuid dmidecode procps \
     && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
-    && dnf install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip \
+    && dnf install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \

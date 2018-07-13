@@ -4,18 +4,12 @@
 
 
 GIT_TAG=$1
-NOTES=$2
-GIT_TOKEN=$3
-FILES=$4
+RELEASE_NAME=$2
+NOTES=$3
+GIT_TOKEN=$4
+FILES=
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GITHUB_REPO=$(git config --get remote.origin.url | sed 's/.*:\/\/github.com\///;s/.git$//')
-
-
-echo "GIT_TAG="$GIT_TAG
-echo "NOTES="$NOTES
-echo "FILES="$FILES
-echo "BRANCH="$BRANCH
-echo "GITHUB_REPO="$GITHUB_REPO
 
 POST_DATA()
 {
@@ -23,7 +17,7 @@ POST_DATA()
 {
   "tag_name": "$GIT_TAG",
   "target_commitish": "$BRANCH",
-  "name": "$GIT_TAG",
+  "name": "$RELEASE_NAME",
   "body": "$NOTES",
   "draft": false,
   "prerelease": false
@@ -31,7 +25,15 @@ POST_DATA()
 EOF
 }
 
+echo "=============================="
+echo "GIT_TAG="$GIT_TAG
+echo "RELEASE_NAME="$RELEASE_NAME
+echo "NOTES="$NOTES
+echo "FILES="$FILES
+echo "BRANCH="$BRANCH
+echo "GITHUB_REPO="$GITHUB_REPO
 echo "$(POST_DATA)"
+echo "=============================="
 
 echo "Create release $GIT_TAG for repo: $GITHUB_REPO BRANCH: $BRANCH"
 curl -s -H "Authorization: token $GIT_TOKEN" --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases"

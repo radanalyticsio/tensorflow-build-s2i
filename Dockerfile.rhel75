@@ -56,7 +56,7 @@ ENV TF_NEED_KAFKA 0
 ENV TF_NEED_OPENCL_SYCL 0
 ENV TF_DOWNLOAD_CLANG 0
 ENV TF_SET_ANDROID_WORKSPACE 0
-ENV PATH /usr/local/bin:$PATH
+ENV PATH /usr/local/bin:$PATH:/home/default/.local/bin
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
 
@@ -71,9 +71,10 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash  ; fi \
     && if [ "$PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils rh-python36 rh-python36-python-pip rh-python36-scldevel && scl enable rh-python36 bash  ; fi \
     && yum install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
+    && yum install -y which findutils x86info cpuid dmidecode procps \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
-    && yum install -y which libxml2 libxml2-devel libxslt libxslt-devel gzip \
+    && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
     && rpm -qf /bin/scl \
