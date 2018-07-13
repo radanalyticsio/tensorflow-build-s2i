@@ -21,28 +21,6 @@
             }
         },
         {
-            "kind": "ImageStream",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}-s2i",
-                "labels": {
-                    "appTypes": "tensorflow-build-image",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "tags": [
-                    {
-                        "name": "latest",
-                        "from": {
-                            "kind": "DockerImage",
-                            "name": "${S2I_IMAGE}"
-                        }
-                    }
-                ]
-            }
-        },
-        {
             "kind": "BuildConfig",
             "apiVersion": "v1",
             "metadata": {
@@ -78,8 +56,8 @@
                     "dockerStrategy": {
                         "dockerfilePath": "${DOCKER_FILE_PATH}",
                         "from": {
-                            "kind": "ImageStreamTag",
-                            "name": "${APPLICATION_NAME}-s2i:latest"
+                            "kind": "DockerImage",
+                            "name": "${S2I_IMAGE}"
                         },
                         "env": [
                                     {
