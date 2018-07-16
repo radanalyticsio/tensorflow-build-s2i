@@ -7,7 +7,7 @@ GIT_TAG=$1
 RELEASE_NAME=$2
 NOTES=$3
 GIT_TOKEN=$4
-FILES=
+FILES=$5
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GITHUB_REPO=$(git config --get remote.origin.url | sed 's/.*:\/\/github.com\///;s/.git$//')
 
@@ -36,9 +36,12 @@ echo "$(POST_DATA)"
 echo "=============================="
 
 echo "Create release $GIT_TAG for repo: $GITHUB_REPO BRANCH: $BRANCH"
-curl -s -H "Authorization: token $GIT_TOKEN" --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases"
+#this command doesnt work
+#curl -s -i -H "Authorization: token $GIT_TOKEN" --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases"
 
-#?access_token=$GIT_TOKEN
+curl -s -i -H --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases?access_token=$GIT_TOKEN"
+
+#
 
 
 echo "get LATEST_TAG_ID..."
