@@ -254,7 +254,8 @@ else
 						cp /workspace/bins/*.whl /tmp/release_dir/
 						ls -l
 						whlff=$(basename `ls *.whl`)
-						OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
+						OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
+						#OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
 						RELEASE_NAME=$OSVER/$TF_GIT_BRANCH
 						cd wheels
 						ls -l
