@@ -78,11 +78,11 @@ OSVER=$(. /etc/os-release;echo $ID)
 echo "OSVER = "$OSVER
 if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] ; then
-		echo "rhel"
+		echo "rhel "
 		rpm -ql python27-python-devel  | grep Python.h
 		export LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} && 
 		echo $LD_LIBRARY_PATH && export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/ &&
-		echp $PYTHON_LIB_PATH && export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
+		echo $PYTHON_LIB_PATH && export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
 		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH;
 	fi
@@ -309,7 +309,7 @@ else
 						whlff=$(basename `ls *.whl`)
 						OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
 						#OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
-						RELEASE_NAME=$OSVER/$TF_GIT_BRANCH
+						RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH
 						cd wheels
 						ls -l
 						if [ $TF_NEED_CUDA = "1" ]; then
