@@ -1,0 +1,217 @@
+FROM registry.access.redhat.com/rhscl/s2i-core-rhel7
+
+MAINTAINER Subin Modeel <smodeel@redhat.com>
+
+USER root
+
+ENV BUILDER_VERSION 1.0
+
+LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
+      io.k8s.display-name="Tensorflow BUILD" \
+      io.openshift.expose-services="8080:http" \
+      io.openshift.tags="builder,python,tf-build" \
+      io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
+
+
+############################################
+## taken from base
+## https://hub.docker.com/r/nvidia/cuda/
+############################################
+
+RUN NVIDIA_GPGKEY_SUM=d1be581509378368edeec8c1eb2958702feedf3bc3d17011adbf24efacce4ab5 && \
+    curl -fsSL https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/7fa2af80.pub | sed '/^Version/d' > /etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA && \
+    echo "$NVIDIA_GPGKEY_SUM  /etc/pki/rpm-gpg/RPM-GPG-KEY-NVIDIA" | sha256sum -c --strict -
+
+COPY cuda.repo /etc/yum.repos.d/cuda.repo
+
+ENV CUDA_VERSION 9.2.148
+
+ENV CUDA_PKG_VERSION 9-2-$CUDA_VERSION-1
+RUN yum install -y \
+        cuda-cudart-$CUDA_PKG_VERSION && \
+    ln -s cuda-9.2 /usr/local/cuda && \
+    rm -rf /var/cache/yum/*
+
+#########################
+## taken from devel
+#########################
+ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs
+
+# nvidia-docker 1.0
+LABEL com.nvidia.volumes.needed="nvidia_driver"
+LABEL com.nvidia.cuda.version="${CUDA_VERSION}"
+
+RUN echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf && \
+    echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+ENV PATH /usr/local/nvidia/bin:/usr/local/cuda/bin:${PATH}
+ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
+
+# nvidia-container-runtime
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
+ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
+############################################
+
+# DONOT uncomment. uncomment for dev.
+ARG BAZEL_VERSION=0.11.0
+ARG NB_PYTHON_VER=3.6
+ENV BAZEL_VERSION=$BAZEL_VERSION
+ENV PYTHON_VER=$NB_PYTHON_VER
+
+
+# Not essential, but wise to set the lang
+# Note: Users with other languages should set this in their derivative image
+ENV LANGUAGE en_US.UTF-8
+ENV LANG en_US.UTF-8
+ENV LC_ALL=""
+ENV PYTHONIOENCODING UTF-8
+ENV NB_USER=default
+ENV NB_UID=1001
+###ENV PYTHON_VER=2.7
+ENV PYTHON_BIN_PATH=/usr/bin/python 
+ENV TINI_VERSION=v0.16.1 
+
+## Bazel
+ENV PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VER/site-packages
+ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
+ENV BAZELRC /root/.bazelrc
+###ENV BAZEL_VERSION 0.11.0
+################################################
+## Tensorflow ./configure options for Bazel
+################################################
+ENV PYTHON_BIN_PATH=/usr/bin/python
+ENV CC_OPT_FLAGS -march=native
+ENV TF_NEED_JEMALLOC 1
+ENV TF_NEED_GCP 0
+ENV TF_NEED_VERBS 0
+ENV TF_NEED_HDFS 0
+ENV TF_ENABLE_XLA 0
+ENV TF_NEED_OPENCL 0
+ENV TF_NEED_CUDA 0
+ENV TF_NEED_MPI 0
+ENV TF_NEED_GDR 0
+ENV TF_NEED_S3 0
+ENV TF_NEED_KAFKA 0
+ENV TF_NEED_OPENCL_SYCL 0
+ENV TF_DOWNLOAD_CLANG 0
+ENV TF_SET_ANDROID_WORKSPACE 0
+ENV PATH /usr/local/bin:$PATH:/home/default/.local/bin
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
+
+
+ADD entrypoint /entrypoint
+ADD build_tools /build_tools
+
+RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
+	&& grep -vIr "\x00" -- /build_tools/ \
+    && chmod +x /entrypoint \
+    && yum install -y yum-utils \
+    && prepare-yum-repositories rhel-server-rhscl-7-rpms \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python27-python-devel && scl enable python27 bash ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash  ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils rh-python36 rh-python36-python-pip rh-python36-scldevel && scl enable rh-python36 bash  ; fi \
+    && yum install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
+    && yum install -y which findutils x86info cpuid dmidecode procps \
+    && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
+    && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
+    && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
+    && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
+    && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+#########################
+## taken from runtime
+#########################
+    && yum install -y cuda-libraries-$CUDA_PKG_VERSION cuda-nvtx-$CUDA_PKG_VERSION \
+#########################
+## taken from devel
+#########################
+    && yum install -y cuda-libraries-dev-$CUDA_PKG_VERSION cuda-nvml-dev-$CUDA_PKG_VERSION cuda-minimal-build-$CUDA_PKG_VERSION  cuda-command-line-tools-$CUDA_PKG_VERSION \
+    && rm -rf /var/cache/yum/* \
+#########################
+    && rpm -qf /bin/scl \
+    && scl -l \
+    && ls -l /usr/bin/python* \
+    && chgrp -R root /opt \
+    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
+    && echo $PATH $LD_LIBRARY_PATH \
+    && echo $PYTHON_VER \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then python$PYTHON_VER get-pip.py ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python35/root/usr/bin/python3.5 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python35/root/usr/bin/pip /usr/bin/pip; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python36/root/usr/bin/python3.6 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python36/root/usr/bin/pip /usr/bin/pip; fi \
+    && chmod -R a+rwx /opt \
+    && chmod a+rw /etc/passwd \
+    && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
+    && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
+    && cd /tmp \
+    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 0527A9B7 && gpg --verify /tmp/tini.asc \
+    && mv /tmp/tini /usr/local/bin/tini \
+    && chmod +x /usr/local/bin/tini \
+    && chown -R 1001:1001 /opt/app-root \
+    && chgrp -R root /opt/app-root \
+    && chmod -R ug+rwx /opt/app-root \
+    && echo "startup --batch" >>/etc/.bazelrc \
+    && echo "build --spawn_strategy=standalone --genrule_strategy=standalone" >>/etc/.bazelrc
+
+
+#https://github.com/tensorflow/tensorflow/blob/master/tensorflow/tools/ci_build/install/.bazelrc
+# Running bazel inside a `docker build` command causes trouble, cf:
+#   https://github.com/bazelbuild/bazel/issues/134
+# The easiest solution is to set up a bazelrc file forcing --batch.
+# Similarly, we need to workaround sandboxing issues:
+#   https://github.com/bazelbuild/bazel/issues/418
+#
+
+# A cloned repo is found under serving folder
+#Size of bazel-$BAZEL_VERSION-installer-linux-x86_64.sh is 200MB+
+# downloaded file is available under bazel folder
+
+
+
+# No yum commands here
+# removed python to fix numpy issue
+RUN mkdir -p /tf \
+	&& if [ "$PYTHON_VER" = "3.5" ] ; then export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ; fi \
+	&& if [ "$PYTHON_VER" = "3.6" ] ; then export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ; fi \
+	&& echo $LD_LIBRARY_PATH \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -U setuptools \
+    && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow pyyaml \
+    && mkdir -p /tf/tools \
+    && cd /tf/tools \
+    && wget -q https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
+    && ls -l /tf/tools \
+    && chmod +x bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
+    && ./bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
+    && bazel \
+    && usermod -g root $NB_USER \
+    && mkdir -p /workspace \
+    && chown $NB_UID:root /workspace \
+    && chmod 1777 /workspace \
+    && mkdir -p /home/$NB_USER \
+    && chown -R $NB_UID:root /home/$NB_USER \
+    && chmod g+rwX,o+rX -R /home/$NB_USER
+
+COPY ./s2i/bin/ /usr/libexec/s2i
+
+# NO CLEANUP
+# Donot add below commands
+#    && yum erase -y gcc gcc-c++ glibc-devel \
+#    && yum clean all -y \
+
+
+EXPOSE 8080
+
+ENV HOME /home/$NB_USER
+# This default user is created in the openshift/base-centos7 image
+USER 1001
+# Make the default PWD somewhere that the user can write. This is
+# useful when connecting with 'oc run' and starting a 'spark-shell',
+# which will likely try to create files and directories in PWD and
+# error out if it cannot.
+
+WORKDIR /workspace
+
+ENTRYPOINT ["/entrypoint"]
+
+# TODO: Set the default CMD for the image
+CMD ["/usr/libexec/s2i/usage"]
