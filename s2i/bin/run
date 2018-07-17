@@ -57,23 +57,54 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
 	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
 
-
-OSVER=$(cat /etc/redhat-release |  awk '{print $1 $2}' |tr -d " ")
+OSVER=$(. /etc/os-release;echo $ID)
 echo "OSVER = "$OSVER
+if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
+	if [[ "$OSVER" = "rhel" ]] ; then
+		echo "rhel"
+		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		ls -l $PYTHON_INCLUDE_PATH;
+	fi
+	if [[ "$OSVER" = "fedora" ]] ; then
+		echo "fedora"
+		export PYTHON_INCLUDE_PATH=/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		ls -l $PYTHON_INCLUDE_PATH;
+	fi
+fi
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
-	if [[ "$OSVER" = "RedHat" ]] ; then
+	if [[ "$OSVER" = "rhel" ]] ; then
 		echo "RedHat"
 		export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ; 
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		export PYTHON_INCLUDE_PATH=/usr/include/python3.5m/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		ls -l $PYTHON_INCLUDE_PATH; 
+	fi
+	if [[ "$OSVER" = "fedora" ]] ; then
+		echo "fedora"
+		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		export PYTHON_INCLUDE_PATH=/usr/include/python3.5m/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		ls -l $PYTHON_INCLUDE_PATH; 
 	fi
 fi 
 if [ "$NB_PYTHON_VER" = "3.6" ] ; then 
-	if [[ "$OSVER" = "RedHat" ]] ; then
+	if [[ "$OSVER" = "rhel" ]] ; then
 		echo "RedHat"
 		export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  ; 
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		export PYTHON_INCLUDE_PATH=/usr/include/python3.6m/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		ls -l $PYTHON_INCLUDE_PATH;
+	fi
+	if [[ "$OSVER" = "fedora" ]] ; then
+		echo "fedora"
+		export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		export PYTHON_INCLUDE_PATH=/usr/include/python3.6m/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		ls -l $PYTHON_INCLUDE_PATH; 
 	fi
 fi
 

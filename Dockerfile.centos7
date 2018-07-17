@@ -73,6 +73,8 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
+    && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
+    && python$NB_PYTHON_VER get-pip.py \
     && yum install -y gcc gcc-c++ glibc-devel openssl-devel \
     && yum install -y which findutils x86info cpuid dmidecode procps \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
