@@ -12,11 +12,7 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.tags="builder,python,tf-build" \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
-ENV CUDA_HOME="/usr/local/cuda" 
-ENV CUDA_PATH="/usr/local/cuda" 
-ENV PATH="/usr/local/cuda/bin${PATH:+:${PATH}}" 
-ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"; 
-ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH
+
 
 ############################################
 ## taken from base
@@ -42,6 +38,7 @@ RUN yum install -y \
 ##------------------------
 ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs
 ##========================
+##------------------------
 ## taken from runtime
 ##------------------------
 ENV CUDNN_VERSION 7.1.4.18
@@ -75,6 +72,14 @@ ENV TF_CUDNN_VERSION=7
 ENV TF_NCCL_VERSION=2
 ##========================
 ############################################
+
+# DONOT change the location of the following ENVs
+ENV CUDA_HOME="/usr/local/cuda" 
+ENV CUDA_PATH="/usr/local/cuda" 
+ENV PATH="/usr/local/cuda/bin${PATH:+:${PATH}}" 
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"; 
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH"
+
 
 # DONOT uncomment. uncomment for dev.
 ARG BAZEL_VERSION=0.14.1
