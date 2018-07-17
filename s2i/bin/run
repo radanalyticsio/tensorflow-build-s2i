@@ -76,6 +76,7 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 #/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages
 #/usr/lib/python2.7/site-packages
 
+#export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
 
 OSVER=$(. /etc/os-release;echo $ID)
 echo "OSVER = "$OSVER
@@ -83,9 +84,9 @@ if [ "$NB_PYTHON_VER" = "2.7" ] ; then
 	if [[ "$OSVER" = "rhel" ]] ; then
 		echo "rhel " &&
 		rpm -ql python27-python-devel  | grep Python.h &&
-		export LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} && 
+		export LD_LIBRARY_PATH=/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
 		echo $LD_LIBRARY_PATH && export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/ &&
-		echo $PYTHON_LIB_PATH && export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
+		echo $PYTHON_LIB_PATH &&
 		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH;
 	fi
@@ -210,7 +211,8 @@ echo "####################################"
 cd /workspace
 mkdir -p /workspace/bins
 cp /build_tools/*.sh .
-source print_build_info.sh
+ls -l
+source ./print_build_info.sh && echo "OK" || echo "Failed"
 mv build_info.yaml /workspace/bins/
 
 eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/build.log ; test ${PIPESTATUS[0]} -eq 0
