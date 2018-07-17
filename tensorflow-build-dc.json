@@ -158,6 +158,14 @@
                                         "value": "${TF_SET_ANDROID_WORKSPACE}"
                                     },
                                     {
+                                        "name": "TF_NEED_TENSORRT",
+                                        "value": "${TF_NEED_TENSORRT}"
+                                    },
+                                    {
+                                        "name": "NCCL_INSTALL_PATH",
+                                        "value": "${NCCL_INSTALL_PATH}"
+                                    },
+                                    {
                                         "name": "TEST_LOOP",
                                         "value": "${TEST_LOOP}"
                                     },
@@ -297,13 +305,13 @@
         {
             "name": "TF_CUDA_VERSION",
             "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
-            "value": "9.0",
+            "value": "9.2",
             "required": false
         },
         {
             "name": "TF_CUDA_COMPUTE_CAPABILITIES",
             "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
-            "value": "3.0,3.5,5.2,6.0,6.1",
+            "value": "3.0,3.5,5.2,6.0,6.1,7.0",
             "required": false
         },
         {
@@ -424,6 +432,18 @@
             "name": "TF_SET_ANDROID_WORKSPACE",
             "description": "TF_SET_ANDROID_WORKSPACE",
             "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_TENSORRT",
+            "description": "TF_NEED_TENSORRT",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "NCCL_INSTALL_PATH",
+            "description": "/usr/local/nccl-2.2",
+            "value": "/usr/local/nccl-2.2",
             "required": true
         },
         {

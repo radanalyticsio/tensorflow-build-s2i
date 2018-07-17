@@ -6,6 +6,9 @@
 # For more information see the documentation:
 #	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
 #
+set -e
+set -o pipefail
+
 echo "run...."
 
 ### These ENVs should be set for configure.
@@ -78,8 +81,8 @@ OSVER=$(. /etc/os-release;echo $ID)
 echo "OSVER = "$OSVER
 if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] ; then
-		echo "rhel "
-		rpm -ql python27-python-devel  | grep Python.h
+		echo "rhel " &&
+		rpm -ql python27-python-devel  | grep Python.h &&
 		export LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} && 
 		echo $LD_LIBRARY_PATH && export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/ &&
 		echo $PYTHON_LIB_PATH && export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
@@ -87,15 +90,15 @@ if [ "$NB_PYTHON_VER" = "2.7" ] ; then
 		ls -l $PYTHON_INCLUDE_PATH;
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "fedora"
-		rpm -ql python-devel  | grep Python.h
+		echo "fedora" &&
+		rpm -ql python-devel  | grep Python.h &&
 		export PYTHON_INCLUDE_PATH=/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH;
 	fi
 fi
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] ; then
-		echo "RedHat"
+		echo "RedHat"  &&
 		export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
@@ -103,7 +106,7 @@ if [ "$NB_PYTHON_VER" = "3.5" ] ; then
 		ls -l $PYTHON_INCLUDE_PATH; 
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "fedora"
+		echo "fedora"  &&
 		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
@@ -113,7 +116,7 @@ if [ "$NB_PYTHON_VER" = "3.5" ] ; then
 fi 
 if [ "$NB_PYTHON_VER" = "3.6" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] ; then
-		echo "RedHat"
+		echo "RedHat"  &&
 		export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
@@ -121,7 +124,7 @@ if [ "$NB_PYTHON_VER" = "3.6" ] ; then
 		ls -l $PYTHON_INCLUDE_PATH;
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "fedora"
+		echo "fedora"  &&
 		export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&

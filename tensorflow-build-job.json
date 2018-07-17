@@ -129,6 +129,14 @@
                                         "value": "${TF_SET_ANDROID_WORKSPACE}"
                                     },
                                     {
+                                        "name": "TF_NEED_TENSORRT",
+                                        "value": "${TF_NEED_TENSORRT}"
+                                    },
+                                    {
+                                        "name": "NCCL_INSTALL_PATH",
+                                        "value": "${NCCL_INSTALL_PATH}"
+                                    },
+                                    {
                                         "name": "NB_PYTHON_VER",
                                         "value": "${NB_PYTHON_VER}"
                                     },
@@ -330,6 +338,18 @@
             "name": "TF_SET_ANDROID_WORKSPACE",
             "description": "TF_SET_ANDROID_WORKSPACE",
             "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_TENSORRT",
+            "description": "TF_NEED_TENSORRT",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "NCCL_INSTALL_PATH",
+            "description": "/usr/local/nccl-2.2",
+            "value": "/usr/local/nccl-2.2",
             "required": true
         },
         {
