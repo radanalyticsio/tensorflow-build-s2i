@@ -176,7 +176,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && tar --no-same-owner -xzf cudnn-9.2-linux-x64-v7.1.tgz -C /usr/local/cudnn --strip-components 1 \
     && ln -s /usr/local/cudnn/include/cudnn.h /usr/local/cuda/include/cudnn.h \
     && cp /usr/local/cudnn/lib64/* /usr/local/cuda/lib64 \
-##    && rm cudnn-9.2-linux-x64-v7.1.tgz \
+    && rm cudnn-9.2-linux-x64-v7.1.tgz \
     && ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 \
     && ldconfig \
 #########################
