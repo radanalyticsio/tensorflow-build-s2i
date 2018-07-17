@@ -184,7 +184,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 #########################
 ## https://tech.amikelive.com/node-735/how-to-install-nvidia-collective-communications-library-nccl-2-for-tensorflow-on-ubuntu-16-04/
     && mkdir -p /usr/local/nccl-2.2 \
-    && wget http://perf49.perf.lab.eng.bos.redhat.com:8080/nccl_2.2.13-1%2Bcuda9.2_x86_64.txz -P /usr/local/nccl-2.2/ \
+    && wget http://file.rdu.redhat.com/~smodeel/nccl_2.2.13-1+cuda9.2_x86_64.txz -P /usr/local/nccl-2.2/ \
     && tar -Jxvf /usr/local/nccl-2.2/nccl_2.2.13*.txz -C /usr/local/nccl-2.2/ --strip-components 1 \
 	&& export LD_LIBRARY_PATH="/usr/local/nccl-2.2:/usr/local/cuda-9.2${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
     && ln -s /usr/local/nccl-2.2/include/nccl.h /usr/include/nccl.h \
