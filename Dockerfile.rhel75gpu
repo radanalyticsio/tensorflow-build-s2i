@@ -68,7 +68,7 @@ ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
 ##------------------------
 ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
 ENV TF_CUDA_COMPUTE_CAPABILITIES=3.5,5.2,6.0,6.1,7.0
-ENV TF_CUDA_VERSION=9.0
+ENV TF_CUDA_VERSION=9.2
 ENV TF_CUDNN_VERSION=7
 
 # NCCL 2.x
@@ -111,7 +111,7 @@ ENV TF_NEED_VERBS 0
 ENV TF_NEED_HDFS 0
 ENV TF_ENABLE_XLA 0
 ENV TF_NEED_OPENCL 0
-ENV TF_NEED_CUDA 0
+ENV TF_NEED_CUDA 1
 ENV TF_NEED_MPI 0
 ENV TF_NEED_GDR 0
 ENV TF_NEED_S3 0
@@ -121,6 +121,17 @@ ENV TF_DOWNLOAD_CLANG 0
 ENV TF_SET_ANDROID_WORKSPACE 0
 ENV PATH /usr/local/bin:$PATH:/home/default/.local/bin
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
+
+
+
+ENV LD_LIBRARY_PATH="/usr/local/nccl-2.2:/usr/local/cuda-9.2${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+ENV TF_CUDA_VERSION=9.2
+ENV TF_NEED_CUDA=1
+ENV TF_CUDA_COMPUTE_CAPABILITIES=3.5,5.2,6.0,6.1,7.0
+ENV TF_NEED_TENSORRT=0
+ENV NCCL_INSTALL_PATH=/usr/local/nccl-2.2
+#bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" tensorflow/tools/pip_package:build_pip_package
+
 
 
 ADD entrypoint /entrypoint
@@ -156,17 +167,26 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && CUDNN_DOWNLOAD_SUM=f875340f812b942408098e4c9807cb4f8bdaea0db7c48613acece10c7c827101 \
     && curl -fsSL http://developer.download.nvidia.com/compute/redist/cudnn/v7.1.4/cudnn-9.2-linux-x64-v7.1.tgz -O \
     && echo "$CUDNN_DOWNLOAD_SUM  cudnn-9.2-linux-x64-v7.1.tgz" | sha256sum -c - \
-    && tar --no-same-owner -xzf cudnn-9.2-linux-x64-v7.1.tgz -C /usr/local --wildcards 'cuda/lib64/libcudnn.so.*' \
-    && rm cudnn-9.2-linux-x64-v7.1.tgz \
+    && mkdir -p /usr/local/cudnn \
+    && tar --no-same-owner -xzf cudnn-9.2-linux-x64-v7.1.tgz -C /usr/local/cudnn --strip-components 1 \
+    && ln -s /usr/local/cudnn/include/cudnn.h /usr/local/cuda/include/cudnn.h \
+    && cp /usr/local/cudnn/lib64/* /usr/local/cuda/lib64 \
+##    && rm cudnn-9.2-linux-x64-v7.1.tgz \
     && ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 \
     && ldconfig \
 #########################
 ## taken from tf
 #########################
-    # Link NCCL libray and header where the build script expects them.
-	&& mkdir /usr/local/cuda-9.2/lib  \
-    && ln -s /usr/lib/x86_64-linux-gnu/libnccl.so.2 /usr/local/cuda/lib/libnccl.so.2 \
-    && ln -s /usr/include/nccl.h /usr/local/cuda/include/nccl.h \
+## https://tech.amikelive.com/node-735/how-to-install-nvidia-collective-communications-library-nccl-2-for-tensorflow-on-ubuntu-16-04/
+    && mkdir -p /usr/local/nccl-2.2 \
+    && wget http://perf49.perf.lab.eng.bos.redhat.com:8080/nccl_2.2.13-1%2Bcuda9.2_x86_64.txz -P /usr/local/nccl-2.2/ \
+    && tar -Jxvf /usr/local/nccl-2.2/nccl_2.2.13*.txz -C /usr/local/nccl-2.2/ --strip-components 1 \
+	&& export LD_LIBRARY_PATH="/usr/local/nccl-2.2:/usr/local/cuda-9.2${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" \
+    && ln -s /usr/local/nccl-2.2/include/nccl.h /usr/include/nccl.h \
+    && ln -s /usr/local/nccl-2.2/include/nccl.h /usr/local/cuda/include/nccl.h \
+## Link NCCL libray and header where the build script expects them. \
+	&& mkdir -p /usr/local/cuda-9.2/lib  \
+    && ln -s /usr/lib/nccl-2.2/lib/libnccl.so.2 /usr/local/cuda/lib/libnccl.so.2 \
 #########################
     && rpm -qf /bin/scl \
     && scl -l \
