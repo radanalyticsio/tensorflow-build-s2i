@@ -203,13 +203,13 @@
         {
             "name": "TF_CUDA_VERSION",
             "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
-            "value": "9.0",
+            "value": "9.2",
             "required": false
         },
         {
             "name": "TF_CUDA_COMPUTE_CAPABILITIES",
             "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
-            "value": "3.0,3.5,5.2,6.0,6.1",
+            "value": "3.0,3.5,5.2,6.0,6.1,7.0",
             "required": false
         },
         {

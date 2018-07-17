@@ -55,7 +55,7 @@ ENV TF_NEED_KAFKA 0
 ENV TF_NEED_OPENCL_SYCL 0
 ENV TF_DOWNLOAD_CLANG 0
 ENV TF_SET_ANDROID_WORKSPACE 0
-ENV PATH /usr/local/bin:$PATH
+ENV PATH=/home/$NB_USER/.local/bin:/usr/local/bin:$PATH
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
 
