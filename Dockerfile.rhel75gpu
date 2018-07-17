@@ -12,6 +12,11 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.tags="builder,python,tf-build" \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
+ENV CUDA_HOME="/usr/local/cuda" 
+ENV CUDA_PATH="/usr/local/cuda" 
+ENV PATH="/usr/local/cuda/bin${PATH:+:${PATH}}" 
+ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"; 
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH
 
 ############################################
 ## taken from base
@@ -32,10 +37,16 @@ RUN yum install -y \
     ln -s cuda-9.2 /usr/local/cuda && \
     rm -rf /var/cache/yum/*
 
-#########################
+##------------------------
 ## taken from devel
-#########################
+##------------------------
 ENV LIBRARY_PATH /usr/local/cuda/lib64/stubs
+##========================
+## taken from runtime
+##------------------------
+ENV CUDNN_VERSION 7.1.4.18
+LABEL com.nvidia.cudnn.version="${CUDNN_VERSION}"
+##========================
 
 # nvidia-docker 1.0
 LABEL com.nvidia.volumes.needed="nvidia_driver"
@@ -51,10 +62,22 @@ ENV LD_LIBRARY_PATH /usr/local/nvidia/lib:/usr/local/nvidia/lib64
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,utility
 ENV NVIDIA_REQUIRE_CUDA "cuda>=9.2"
+
+##------------------------
+## taken from tensorflow
+##------------------------
+ENV LD_LIBRARY_PATH /usr/local/cuda/extras/CUPTI/lib64:$LD_LIBRARY_PATH
+ENV TF_CUDA_COMPUTE_CAPABILITIES=3.5,5.2,6.0,6.1,7.0
+ENV TF_CUDA_VERSION=9.0
+ENV TF_CUDNN_VERSION=7
+
+# NCCL 2.x
+ENV TF_NCCL_VERSION=2
+##========================
 ############################################
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.11.0
+ARG BAZEL_VERSION=0.14.1
 ARG NB_PYTHON_VER=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
 ENV PYTHON_VER=$NB_PYTHON_VER
@@ -127,6 +150,23 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 #########################
     && yum install -y cuda-libraries-dev-$CUDA_PKG_VERSION cuda-nvml-dev-$CUDA_PKG_VERSION cuda-minimal-build-$CUDA_PKG_VERSION  cuda-command-line-tools-$CUDA_PKG_VERSION \
     && rm -rf /var/cache/yum/* \
+#########################
+## taken from runtime
+#########################
+    && CUDNN_DOWNLOAD_SUM=f875340f812b942408098e4c9807cb4f8bdaea0db7c48613acece10c7c827101 \
+    && curl -fsSL http://developer.download.nvidia.com/compute/redist/cudnn/v7.1.4/cudnn-9.2-linux-x64-v7.1.tgz -O \
+    && echo "$CUDNN_DOWNLOAD_SUM  cudnn-9.2-linux-x64-v7.1.tgz" | sha256sum -c - \
+    && tar --no-same-owner -xzf cudnn-9.2-linux-x64-v7.1.tgz -C /usr/local --wildcards 'cuda/lib64/libcudnn.so.*' \
+    && rm cudnn-9.2-linux-x64-v7.1.tgz \
+    && ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 \
+    && ldconfig \
+#########################
+## taken from tf
+#########################
+    # Link NCCL libray and header where the build script expects them.
+	&& mkdir /usr/local/cuda-9.2/lib  \
+    && ln -s /usr/lib/x86_64-linux-gnu/libnccl.so.2 /usr/local/cuda/lib/libnccl.so.2 \
+    && ln -s /usr/include/nccl.h /usr/local/cuda/include/nccl.h \
 #########################
     && rpm -qf /bin/scl \
     && scl -l \

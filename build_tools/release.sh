@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#https://github.community/t5/How-to-use-Git-and-GitHub/How-to-create-full-release-from-command-line-not-just-a-tag/td-p/6895
+#https://developer.github.com/v3/repos/releases/
+#https://stackoverflow.com/questions/5207269/releasing-a-build-artifact-on-github
 #
 
 
@@ -36,19 +39,27 @@ echo "$(POST_DATA)"
 echo "=============================="
 
 echo "Create release $GIT_TAG for repo: $GITHUB_REPO BRANCH: $BRANCH"
-#this command doesnt work
-#curl -s -i -H "Authorization: token $GIT_TOKEN" --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases"
+## This command will ONLY work if the oauth token has scope of "public repo".
+## You can generate Personal API access token at https://github.com/settings/tokens. Minimal token scope is repo
+curl -s -i -H "Authorization: token $GIT_TOKEN" --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases"
 
-curl -s -i -H --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases?access_token=$GIT_TOKEN"
+## DONOT use below command
+## curl -s -i -H --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases?access_token=$GIT_TOKEN"
 
-#
+get_latest_release() {
+  # Get latest release from GitHub api
+  curl --silent -H "Authorization: token $GIT_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/releases/latest" | 
+    grep '"tag_name":' |                                            # Get tag line
+    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
+}
+echo "$(get_latest_release)"
 
 
 echo "get LATEST_TAG_ID..."
 LATEST_TAG_ID=$(curl -s -H "Authorization: token $GIT_TOKEN" \
 	"https://api.github.com/repos/$GITHUB_REPO/releases/latest" \
  	| grep "\"id\":"  2>&1 | head -n 1 | sed -e 's/\"id\": //g' | tr -d " " |tr -d ",")
- echo "get LATEST_TAG_ID="$LATEST_TAG_ID
+ echo "LATEST_TAG_ID="$LATEST_TAG_ID
 
 
 echo "get LATEST_REL_ID..."
@@ -56,7 +67,7 @@ LATEST_REL_ID=$(curl -s -H "Authorization: token $GIT_TOKEN" \
 	"https://api.github.com/repos/$GITHUB_REPO/releases/$LATEST_TAG_ID"  \
 	| grep "\"id\":"  2>&1 | head -n 1 | sed -e 's/\"id\": //g' | tr -d " " |tr -d ",")
 
-echo "get LATEST_REL_ID="$LATEST_REL_ID
+echo "LATEST_REL_ID="$LATEST_REL_ID
 
 for f in $FILES; do
     echo "FILE="$f
