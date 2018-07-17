@@ -170,6 +170,12 @@ GCC_FLAGSS=$(gcc -### -E - -march=native 2>&1 | sed -r '/cc1/!d;s/(")|(^.* - )|(
 
 CPUINFO_FLAGS=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]')
 
+#TODO get specific info
+#https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/platform/cpu_feature_guard.cc#L59
+CPU_PATTERN="[\&\/a-zA-Z0-9\-]*sse[\&\/a-zA-Z0-9\-\_]*|[\&\/a-zA-Z0-9\-]*fma[\&\/a-zA-Z0-9\-\_]*|[\&\/a-zA-Z0-9\-]*avx[\&\/a-zA-Z0-9\-\_]*"
+CPUINFO_FLAGS_SPECIFIC=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]' | grep -oE $CPU_PATTERN | tr '\n' ' ')
+
+
 # Print info
 TF_BUILD_INFO="{
 \"source_HEAD\": \""${TF_HEAD}"\", 
@@ -194,6 +200,7 @@ TF_BUILD_INFO="{
 \"CUDA_toolkit_version\": \""${CUDA_TOOLKIT_VER}"\",
 \"GCC_FLAGS\": \""${GCC_FLAGSS}"\",
 \"CPUINFO_FLAGS\": \""${CPUINFO_FLAGS}"\",
+\"CPUINFO_FLAGS_SPECIFIC\": \""${CPUINFO_FLAGS_SPECIFIC}"\",
 "${BUILD_ENVs}"
 "${TF_ENVs}"
 \"march\": \""${ARCH}"\"
