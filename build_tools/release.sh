@@ -28,6 +28,14 @@ POST_DATA()
 EOF
 }
 
+get_latest_release() {
+  # Get latest release from GitHub api
+  curl --silent -H "Authorization: token $GIT_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/releases/latest" | 
+    grep '"tag_name":' |                                            # Get tag line
+    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
+}
+
+
 echo "=============================="
 echo "GIT_TAG="$GIT_TAG
 echo "RELEASE_NAME="$RELEASE_NAME
@@ -35,24 +43,22 @@ echo "NOTES="$NOTES
 echo "FILES="$FILES
 echo "BRANCH="$BRANCH
 echo "GITHUB_REPO="$GITHUB_REPO
-echo "$(POST_DATA)"
+echo "POST_DATA=$(POST_DATA)"
+echo "LATEST_REL_ID=$(get_latest_release)"
+curl -I -H 'Authorization: token $GIT_TOKEN' https://api.github.com/rate_limit
 echo "=============================="
 
+
+
 echo "Create release $GIT_TAG for repo: $GITHUB_REPO BRANCH: $BRANCH"
-## This command will ONLY work if the oauth token has scope of "public repo".
+## This command will ONLY work if the oauth token has scope of "repo".
 ## You can generate Personal API access token at https://github.com/settings/tokens. Minimal token scope is repo
 curl -s -i -H "Authorization: token $GIT_TOKEN" --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases"
 
 ## DONOT use below command
 ## curl -s -i -H --data "$(POST_DATA)" "https://api.github.com/repos/$GITHUB_REPO/releases?access_token=$GIT_TOKEN"
 
-get_latest_release() {
-  # Get latest release from GitHub api
-  curl --silent -H "Authorization: token $GIT_TOKEN" "https://api.github.com/repos/$GITHUB_REPO/releases/latest" | 
-    grep '"tag_name":' |                                            # Get tag line
-    sed -E 's/.*"([^"]+)".*/\1/'                                    # Pluck JSON value
-}
-echo "$(get_latest_release)"
+
 
 
 echo "get LATEST_TAG_ID..."
