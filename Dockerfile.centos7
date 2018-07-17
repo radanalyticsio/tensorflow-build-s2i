@@ -65,21 +65,26 @@ ADD build_tools /build_tools
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 	&& grep -vIr "\x00" -- /build_tools/ \
     && chmod +x /entrypoint \
+    && yum install -y centos-release-scl-rh \
     && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
+    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y rh-python35 && scl enable rh-python35 bash; fi \
+    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y rh-python36 && scl enable rh-python36 bash; fi \
     && yum install -y epel-release \
     && yum install -y tar tree git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip protobuf-compiler \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && python$NB_PYTHON_VER get-pip.py \
+    && echo $PATH $LD_LIBRARY_PATH \
+    && echo $PYTHON_VER \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then python$PYTHON_VER get-pip.py ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python35/root/usr/bin/python3.5 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python35/root/usr/bin/pip /usr/bin/pip; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python36/root/usr/bin/python3.6 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python36/root/usr/bin/pip /usr/bin/pip; fi \
     && yum install -y gcc gcc-c++ glibc-devel openssl-devel \
     && yum install -y which findutils x86info cpuid dmidecode procps \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq3-devel \
-    && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip python-devel \
+    && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
