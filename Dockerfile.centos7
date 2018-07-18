@@ -17,7 +17,7 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
 ARG BAZEL_VERSION=0.11.0
 ARG NB_PYTHON_VER=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
-ENV NB_PYTHON_VER=$NB_PYTHON_VER
+ENV PYTHON_VER=$NB_PYTHON_VER
 
 # Not essential, but wise to set the lang
 # Note: Users with other languages should set this in their derivative image
@@ -32,7 +32,7 @@ ENV PYTHON_BIN_PATH=/usr/bin/python
 ENV TINI_VERSION=v0.16.1 
 
 ## Bazel
-ENV PYTHON_LIB_PATH=/usr/lib64/python$NB_PYTHON_VER/site-packages
+ENV PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VER/site-packages
 ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
 #### ENV BAZEL_VERSION = DONOT UNCOMMENT
@@ -63,29 +63,61 @@ ADD entrypoint /entrypoint
 ADD build_tools /build_tools
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
+#	&& grep -vIr "\x00" -- /build_tools/ \
     && chmod +x /entrypoint \
     && yum install -y centos-release-scl-rh \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y rh-python35 && scl enable rh-python35 bash; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y rh-python36 && scl enable rh-python36 bash; fi \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python-devel python27-python-devel && scl enable python27 bash ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash && export PATH=/opt/rh/rh-python35/root/usr/bin:$PATH; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils rh-python36 rh-python36-python-pip rh-python36-python-devel && scl enable rh-python36 bash && export PATH=/opt/rh/rh-python36/root/usr/bin:$PATH ; fi \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/bin ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/bin ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
     && yum install -y epel-release \
-    && yum install -y tar tree git curl wget java-headless bzip2 gnupg2 sqlite3 python-pip protobuf-compiler \
+    && yum install -y tar tree git curl wget java-headless bzip2 gnupg2 sqlite3 protobuf-compiler \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && echo $PATH $LD_LIBRARY_PATH \
-    && echo $PYTHON_VER \
-    && if [ "$PYTHON_VER" = "2.7" ] ; then python$PYTHON_VER get-pip.py ; fi \
-    && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python35/root/usr/bin/python3.5 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python35/root/usr/bin/pip /usr/bin/pip; fi \
-    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python36/root/usr/bin/python3.6 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python36/root/usr/bin/pip /usr/bin/pip; fi \
     && yum install -y gcc gcc-c++ glibc-devel openssl-devel \
     && yum install -y which findutils x86info cpuid dmidecode procps \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && yum install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq3-devel \
     && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
+    && echo "-----IMAGE_TEST--------" \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then python$PYTHON_VER get-pip.py ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then  export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python35/root/usr/bin/python3.5 /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python35/root/usr/bin/pip /usr/bin/pip ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then  export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python36/root/usr/bin/python3.6 /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python36/root/usr/bin/pip /usr/bin/pip ; fi \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then echo "PYTHON_H="`rpm -ql rh-python35-python-devel | grep Python.h` ; fi \
+	&& if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/include/ && ls -l /opt/rh/rh-python35/root/usr/lib64/ ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then echo "PYTHON_H="`rpm -ql rh-python36-python-devel | grep Python.h` ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/include/ && ls -l /opt/rh/rh-python36/root/usr/lib64/ ; fi \
+    && echo "PATH=$PATH" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \
+    && ls -l /usr/bin/python* \
+    && echo "-----IMAGE_TEST--------" \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
     && cd /tmp \
@@ -118,6 +150,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 # No yum commands here
 # removed python to fix numpy issue
 RUN mkdir -p /tf \
+	&& if [ "$PYTHON_VER" = "3.5" ] ; then export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ; fi \
+	&& if [ "$PYTHON_VER" = "3.6" ] ; then export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" ; fi \
+	&& echo $LD_LIBRARY_PATH \
     && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -U setuptools \
     && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow pyyaml \

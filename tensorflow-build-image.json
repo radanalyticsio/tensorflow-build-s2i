@@ -48,12 +48,14 @@
                 "source": {
                     "type": "Git",
                     "git": {
-                        "uri": "${SOURCE_REPOSITORY}"
+                        "uri": "${SOURCE_REPOSITORY}",
+                        "ref": "master"
                     }
                 },
                 "strategy": {
                     "type": "Docker",
                     "dockerStrategy": {
+                    	"noCache": true,
                         "dockerfilePath": "${DOCKER_FILE_PATH}",
                         "from": {
                             "kind": "DockerImage",

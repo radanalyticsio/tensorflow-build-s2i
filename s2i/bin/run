@@ -60,6 +60,21 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
 	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
 
+
+if [[ $TEST_LOOP = "y" ]]
+then
+	echo "####################################"
+	echo "      DEV/TEST MODE.....       	  "
+	echo "####################################"
+    echo "Starting a infinite while loop to debug in console terminal\n"
+    while :
+	do
+		echo "Press [CTRL+C] to stop.."
+		sleep 1
+	done
+fi
+
+
 # The Python conundrum
 # ----------------------------
 #rpm -ql python27-python-devel  | grep Python.h
@@ -71,28 +86,39 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 #rpm -ql rh-python36-scldevel  | grep Python.h 
 # /opt/rh/rh-python36/root/usr/include/python3.6m/Python.h
 #/opt/rh/python27/root/usr/lib64/
+# scl python
 #https://www.softwarecollections.org/en/scls/rhscl/python27/
+#https://linuxize.com/post/how-to-install-python-3-on-centos-7/
+#
+#
 #python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
 #/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages
 #/usr/lib/python2.7/site-packages
-
+# 
 #export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
 
+
+# only for 2.7 
+#/usr/include/python2.7/
+#/usr/lib64/python2.7
+
+
+# only for 3.6
+# /opt/rh/rh-python36/root/usr/lib/python3.6/site-packages/
 OSVER=$(. /etc/os-release;echo $ID)
-echo | gcc -E -Wp,-v -
 echo "OSVER = "$OSVER
 if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
-		echo "$OSVER" &&
-		rpm -ql python27-python-devel  | grep Python.h &&
+		echo "$OSVER-$NB_PYTHON_VER"  &&
+		rpm -ql python27-python-devel  | grep Python.h && 
 		export LD_LIBRARY_PATH=/usr/include/python2.7/:/usr/lib64:/usr/lib64/python2.7:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
-		echo $LD_LIBRARY_PATH && export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/ &&
+		echo $LD_LIBRARY_PATH && export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/:$LIBRARY_PATH &&
 		echo $PYTHON_LIB_PATH &&
 		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH  | grep Python.h;
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "fedora" &&
+		echo "$OSVER-$NB_PYTHON_VER"  &&
 		rpm -ql python-devel  | grep Python.h &&
 		export PYTHON_INCLUDE_PATH=/usr/include/python2.7/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH  | grep Python.h;
@@ -100,15 +126,16 @@ if [ "$NB_PYTHON_VER" = "2.7" ] ; then
 fi
 if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
-		echo "$OSVER"  &&
-		export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && 
+		echo "$OSVER-$NB_PYTHON_VER"  &&
+		export CPATH=/opt/rh/rh-python35/root/usr/include/:/opt/rh/rh-python35/root/usr/include/python3.5m:$CPATH &&
+		export LD_LIBRARY_PATH="/usr/lib64:/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH && 
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		export PYTHON_INCLUDE_PATH=/opt/rh/rh-python35/root/usr/include/python3.5m/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH  | grep Python.h; 
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "fedora"  &&
+		echo "$OSVER-$NB_PYTHON_VER"  &&
 		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH &&
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
@@ -118,15 +145,19 @@ if [ "$NB_PYTHON_VER" = "3.5" ] ; then
 fi 
 if [ "$NB_PYTHON_VER" = "3.6" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
-		echo "$OSVER"  &&
-		export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" &&
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
-		export PYTHON_INCLUDE_PATH=/opt/rh/rh-python36/root/usr/include/python3.6m/ && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
+		echo "$OSVER-$NB_PYTHON_VER"  &&
+		scl enable rh-python36 bash &&
+		export LD_LIBRARY_PATH=/opt/rh/rh-python36/root/usr/lib64/:/opt/rh/rh-python36/root/usr/include:/opt/rh/rh-python36/root/usr/include/python3.6m/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
+		export CPATH=/opt/rh/rh-python36/root/usr/include:/opt/rh/rh-python36/root/usr/include/python3.6m:$CPATH &&
+		export LIBRARY_PATH=/opt/rh/rh-python36/root/usr/include:/opt/rh/rh-python36/root/usr/include/python3.6m:$LIBRARY_PATH &&
+		export PYTHON_INCLUDE_PATH=/opt/rh/rh-python36/root/usr/include/python3.6m/:$PYTHON_INCLUDE_PATH &&
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH  && 
+		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
 		ls -l $PYTHON_INCLUDE_PATH  | grep Python.h;
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "fedora"  &&
+		echo "$OSVER-$NB_PYTHON_VER"  &&
 		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH &&
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH && echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH &&
@@ -135,6 +166,7 @@ if [ "$NB_PYTHON_VER" = "3.6" ] ; then
 	fi
 fi
 
+echo | gcc -E -Wp,-v -
 
 
 ### Setup Bazel
