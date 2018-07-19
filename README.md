@@ -115,9 +115,9 @@ The values for `S2I_IMAGE` are :
 - Centos7- `openshift/base-centos7`
 
 The values for `DOCKER_FILE_PATH` are :
-- Fedora26- `Dockerfile.fedora27`
+- Fedora26- `Dockerfile.fedora26`
 - Fedora27- `Dockerfile.fedora27`
-- Fedora27- `Dockerfile.fedora27`
+- Fedora28- `Dockerfile.fedora28`
 - RHEL7.5- `Dockerfile.rhel75`
 - Centos7- `Dockerfile.centos7`
 
