@@ -74,14 +74,8 @@ Following should be left blank for a build job.
 
 *set some environment values for convenience*
 ```
-# valid values are 27,36,35
-PYTH_VERSION_SHORT=36
-
 # valid values are 2.7,3.6,3.5
 PYTH_VERSION=3.6
-
-# internal registry of openshift
-REGISTRYY=docker-registry.default.svc:5000/<namespace>
 
 # git token and repo
 export GIT_TOKEN=
@@ -98,7 +92,7 @@ oc create -f tensorflow-build-dc.json
 #### 2. Create Tensorflow build image
 ```
 oc new-app --template=tensorflow-build-image  
---param=APPLICATION_NAME=tf-rhel75-build-image-36 \
+--param=APPLICATION_NAME=tf-rhel75-build-image-${PYTH_VERSION//.} \
 --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7  \
 --param=DOCKER_FILE_PATH=Dockerfile.rhel75  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
@@ -131,14 +125,14 @@ And then deploy from UI with appropriate values.
 
 ```
 oc new-app --template=tensorflow-build-job  
---param=APPLICATION_NAME=tf-rhel75-build-job-36 \
---param=BUILDER_IMAGESTREAM=$REGISTRYY/tf-rhel75-build-image-36:2  \
+--param=APPLICATION_NAME=tf-rhel75-build-job-${PYTH_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
 --param=BAZEL_VERSION=0.11.0 \
 --param=GIT_DEST_REPO=$GIT_DEST_REPO  \
 --param=GIT_TOKEN=$GIT_TOKEN
 ```
-NOTE: `BUILDER_IMAGESTREAM = $REGISTRYY/APPLICATION_NAME:VERSION` from step 2.
+NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2.
 
 *OR*
 
@@ -151,8 +145,8 @@ You can generate Personal API access token at https://github.com/settings/tokens
 ### To create a DEV environment for debugging build issues :
 ```
 oc new-app --template=tensorflow-build-dc  
---param=APPLICATION_NAME=tf-rhel75-build-dc-36 \
---param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-36:2  \
+--param=APPLICATION_NAME=tf-rhel75-build-dc-${PYTH_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
 --param=GIT_TOKEN=$GIT_TOKEN \
 --param=TEST_LOOP=y

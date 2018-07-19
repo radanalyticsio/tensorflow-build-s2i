@@ -2,9 +2,9 @@
     "kind": "Template",
     "apiVersion": "v1",
     "metadata": {
-        "name": "tensorflow-build-dc",
+        "name": "tensorflow-build",
         "annotations": {
-            "description": "Template to create a Tensorflow build pod.For DEV work.",
+            "description": "Template to create a Job to build tensorflow wheel files.",
             "tags": "tf-app"
         }
     },
@@ -15,18 +15,31 @@
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appTypes": "tensorflow-build-dc",
+                    "appTypes": "tensorflow-build",
                     "appName": "${APPLICATION_NAME}"
                 }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": true
+                },
+                "tags": [
+                    {
+                        "name": "0"
+                    }
+                ]
             }
         },
         {
             "kind": "BuildConfig",
             "apiVersion": "v1",
+            "annotations": {
+                "template.alpha.openshift.io/wait-for-ready": true
+            },
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appTypes": "tensorflow-build-dc",
+                    "appTypes": "tensorflow-build",
                     "appName": "${APPLICATION_NAME}"
                 }
             },
@@ -41,40 +54,67 @@
                     {
                         "type": "Generic",
                         "generic" : {
-                        	"secret": "${GENERIC_WEBHOOK_SECRET}"
+                            "secret": "${GENERIC_WEBHOOK_SECRET}"
                         }
                     }
                 ],
                 "source": {
                     "type": "Git",
                     "git": {
-                        "uri": "${SOURCE_REPOSITORY}"
+                        "uri": "${SOURCE_REPOSITORY}",
+                        "ref": "master"
                     }
                 },
                 "strategy": {
-                    "type": "Source",
-                    "sourceStrategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
+                        "noCache": true,
+                        "dockerfilePath": "${DOCKER_FILE_PATH}",
                         "from": {
-                            "kind": "ImageStreamTag",
-                            "name": "${BUILDER_IMAGESTREAM}"
-                        }
+                            "kind": "DockerImage",
+                            "name": "${S2I_IMAGE}"
+                        },
+                        "env": [
+                                    {
+                                        "name": "NB_PYTHON_VER",
+                                        "value": "${NB_PYTHON_VER}"
+                                    },
+                                    {
+                                        "name": "BAZEL_VERSION",
+                                        "value": "${BAZEL_VERSION}"
+                                    }
+                        ]
                     }
                 },
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}:latest"
+                        "name": "${APPLICATION_NAME}:${VERSION}"
+                    }
+                },
+                "resources": {
+                    "limits": {
+                        "cpu": "6",
+                        "memory": "8Gi"
+                    },
+                    "requests": {
+                        "cpu": "3",
+                        "memory": "4Gi"
                     }
                 }
             }
         },
         {
-            "kind": "DeploymentConfig",
-            "apiVersion": "v1",
+            "kind": "Job",
+            "apiVersion": "batch/v1",
+            "annotations": {
+                "template.alpha.openshift.io/wait-for-ready": true,
+                "image.openshift.io/triggers": "[{\"from\":{\"kind\":\"ImageStreamTag\",\"name\":\"${APPLICATION_NAME}:${VERSION}\"},\"fieldPath\":\"spec.jobTemplate.spec.template.spec.containers[?(@.name==\\\"${APPLICATION_NAME}\\\")].image\"}]"
+            },
             "metadata": {
                 "name": "${APPLICATION_NAME}",
                 "labels": {
-                    "appTypes": "tensorflow-build-dc",
+                    "appTypes": "tensorflow-build",
                     "appName": "${APPLICATION_NAME}"
                 }
             },
@@ -95,20 +135,15 @@
                             ],
                             "from": {
                                 "kind": "ImageStreamTag",
-                                "name": "${APPLICATION_NAME}:latest"
+                                "name": "${APPLICATION_NAME}:${VERSION}"
                             }
                         }
                     }
                 ],
-                "replicas": 1,
-                "selector": {
-                    "deploymentconfig": "${APPLICATION_NAME}"
-                },
                 "template": {
                     "metadata": {
                         "labels": {
-                            "appid": "tf-build-${APPLICATION_NAME}",
-                            "deploymentconfig": "${APPLICATION_NAME}",
+                            "appTypes": "tensorflow-build",
                             "appName": "${APPLICATION_NAME}"
                         }
                     },
@@ -116,10 +151,6 @@
                         "containers": [
                             {
                                 "env": [
-                                    {
-                                        "name": "PORT",
-                                        "value": "${PORT}"
-                                    },
                                     {
                                         "name": "CUSTOM_BUILD",
                                         "value": "${CUSTOM_BUILD}"
@@ -217,8 +248,12 @@
                                         "value": "${TF_SET_ANDROID_WORKSPACE}"
                                     },
                                     {
-                                        "name": "TEST_LOOP",
-                                        "value": "${TEST_LOOP}"
+                                        "name": "TF_NEED_TENSORRT",
+                                        "value": "${TF_NEED_TENSORRT}"
+                                    },
+                                    {
+                                        "name": "NCCL_INSTALL_PATH",
+                                        "value": "${NCCL_INSTALL_PATH}"
                                     },
                                     {
                                         "name": "NB_PYTHON_VER",
@@ -231,10 +266,6 @@
                                     {
                                         "name": "TF_GIT_BRANCH",
                                         "value": "${TF_GIT_BRANCH}"
-                                    },
-                                    {
-                                        "name": "HOST_ON_HTTP_SERVER",
-                                        "value": "${HOST_ON_HTTP_SERVER}"
                                     },
                                     {
                                         "name": "TEST_WHEEL_FILE",
@@ -250,72 +281,22 @@
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
-                                "image": "${BUILDER_IMAGESTREAM}",
-                                "ports": [
-                                    {
-                                        "containerPort": 8080,
-                                        "protocol": "TCP"
-                                    }
-                                ],
-                               "resources": {
+                                "image": " ",
+                                "command": ["/entrypoint", "/usr/libexec/s2i/run"],
+                                "resources": {
                                     "limits": {
                                         "cpu": "6",
                                         "memory": "8Gi"
                                     },
                                     "requests": {
                                         "cpu": "3",
-                                        "memory": "4Gi"
+                                        "memory": "6Gi"
                                     }
                                 }
                             }
-                        ]
+                        ],
+                        "restartPolicy": "Never"
                     }
-                }
-            }
-        },
-        {
-            "kind": "Service",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "labels": {
-                    "appTypes": "tensorflow-build-dc",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "8080-tcp",
-                        "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 8080
-                    }
-                ],
-                "selector": {
-                    "deploymentconfig": "${APPLICATION_NAME}"
-                }
-            }
-        },
-        {
-            "kind": "Route",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "${APPLICATION_NAME}",
-                "labels": {
-                    "appTypes": "tensorflow-build-dc",
-                    "appName": "${APPLICATION_NAME}"
-                }
-            },
-            "spec": {
-                "host": "",
-                "to": {
-                    "kind": "Service",
-                    "name": "${APPLICATION_NAME}",
-                    "weight": 100
-                },
-                "port": {
-                    "targetPort": "8080-tcp"
                 }
             }
         }
@@ -324,20 +305,56 @@
         {
             "name": "APPLICATION_NAME",
             "description": "The name of the application.",
-            "value": "tensorflow-build-dc",
+            "value": "tensorflow-build",
             "from": "[a-zA-Z0-9]{10}",
             "required": true
         },
         {
             "name": "SOURCE_REPOSITORY",
             "description": "Git repository for source.",
-            "value": "https://github.com/sub-mod/empty-repo.git",
+            "value": "https://github.com/thoth-station/tensorflow-build-s2i.git",
+            "required": true
+        },
+        {
+            "name": "S2I_IMAGE",
+            "description": "registry.fedoraproject.org/f27/s2i-core, registry.fedoraproject.org/f28/s2i-core, registry.access.redhat.com/rhscl/s2i-core-rhel7",
+            "value": "registry.fedoraproject.org/f27/s2i-core",
+            "required": true
+        },
+        {
+            "name": "DOCKER_FILE_PATH",
+            "description": "Dockerfile.fedora27, Dockerfile.fedora28, Dockerfile.rhel75.",
+            "value": "Dockerfile.fedora27",
+            "required": true
+        },
+        {
+            "name": "NB_PYTHON_VER",
+            "description": "Python version 2.7,3.5,3.6",
+            "value": "3.6",
+            "required": true
+        },
+        {
+            "name": "BAZEL_VERSION",
+            "description": "BAZEL_VERSION",
+            "value": "0.11.0",
+            "required": true
+        },
+        {
+            "name": "GENERIC_WEBHOOK_SECRET",
+            "description": "A secret string used to configure the Generic webhook.",
+            "value": "tf-build-secret",
+            "required": true
+        },
+        {
+            "name": "VERSION",
+            "description": "Version of the build image, i.e docker image tag",
+            "value": "latest",
             "required": true
         },
         {
             "name": "BUILDER_IMAGESTREAM",
-            "description": "tensorflow-build-image-fc27-36:latest, tensorflow-build-image-rhel75-36:latest",
-            "value": "",
+            "description": "tensorflow-build-image-fc27-36:latest, tensorflow-build-image-rhel75-36:2",
+            "value": "NOP",
             "required": true
         },
         {
@@ -355,13 +372,13 @@
         {
             "name": "TF_CUDA_VERSION",
             "description": "TF_CUDA_VERSION depends on TF_NEED_CUDA",
-            "value": "9.0",
+            "value": "9.2",
             "required": false
         },
         {
             "name": "TF_CUDA_COMPUTE_CAPABILITIES",
             "description": "TF_CUDA_COMPUTE_CAPABILITIES depends on TF_NEED_CUDA",
-            "value": "3.0,3.5,5.2,6.0,6.1",
+            "value": "3.0,3.5,5.2,6.0,6.1,7.0",
             "required": false
         },
         {
@@ -485,39 +502,21 @@
             "required": true
         },
         {
-            "name": "TEST_LOOP",
-            "description": "USE ONLY with DeploymentConfig.(y or n).If y then start a while loop.If y then http won't start.",
-            "value": "n",
-            "required": false
-        },
-        {
-            "name": "HOST_ON_HTTP_SERVER",
-            "description": "USE ONLY with DeploymentConfig.(y or n)If y then http server.",
-            "value": "y",
+            "name": "TF_NEED_TENSORRT",
+            "description": "TF_NEED_TENSORRT",
+            "value": "0",
             "required": true
         },
         {
-            "name": "PORT",
-            "description": "USE ONLY with DeploymentConfig.http server port.",
-            "value": "8080",
+            "name": "NCCL_INSTALL_PATH",
+            "description": "/usr/local/nccl-2.2",
+            "value": "/usr/local/nccl-2.2",
             "required": true
         },
         {
             "name": "TEST_WHEEL_FILE",
             "description": "(y or n)To run a simple test code to test wheel file.",
             "value": "y",
-            "required": true
-        },
-        {
-            "name": "NB_PYTHON_VER",
-            "description": "Python version 2.7,3.5,3.6 .",
-            "value": "3.6",
-            "required": true
-        },
-        {
-            "name": "BAZEL_VERSION",
-            "description": "BAZEL_VERSION",
-            "value": "0.11.0",
             "required": true
         },
         {

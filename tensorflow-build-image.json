@@ -18,6 +18,11 @@
                     "appTypes": "tensorflow-build-image",
                     "appName": "${APPLICATION_NAME}"
                 }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": true
+                }
             }
         },
         {

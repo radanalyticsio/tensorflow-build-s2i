@@ -2,9 +2,7 @@
 
 #### Setup 
 ```
-PYTH_VERSION_SHORT=36
 PYTH_VERSION=3.6
-REGISTRYY=docker-registry.default.svc:5000/<namespace>
 export GIT_TOKEN=
 export GIT_DEST_REPO=
 ```
@@ -19,7 +17,7 @@ oc create -f tensorflow-build-dc.json
 #### Create the Build Image for fedora27
 ```
 oc new-app --template=tensorflow-build-image  \
---param=APPLICATION_NAME=tf-fedora27-build-image-$PYTH_VERSION_SHORT \
+--param=APPLICATION_NAME=tf-fedora27-build-image-${PYTH_VERSION//.} \
 --param=S2I_IMAGE=registry.fedoraproject.org/f27/s2i-core  \
 --param=DOCKER_FILE_PATH=Dockerfile.fedora27  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
@@ -30,8 +28,8 @@ oc new-app --template=tensorflow-build-image  \
 #### Create Tensorflow wheel for CPU using the build image
 ```
 oc new-app --template=tensorflow-build-job  \
---param=APPLICATION_NAME=tf-fedora27-builder-job-$PYTH_VERSION_SHORT  \
---param=BUILDER_IMAGESTREAM=$REGISTRYY/tf-fedora27-build-image-$PYTH_VERSION_SHORT:1  \
+--param=APPLICATION_NAME=tf-fedora27-builder-job-${PYTH_VERSION//.}  \
+--param=BUILDER_IMAGESTREAM=tf-fedora27-build-image-${PYTH_VERSION//.}:1  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=CUSTOM_BUILD="bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
 --param=GIT_TOKEN=$GIT_TOKEN \
@@ -42,8 +40,8 @@ oc new-app --template=tensorflow-build-job  \
 #### Setup a DEV pod for fedora27
 ```
 oc new-app --template=tensorflow-build-dc  \
---param=APPLICATION_NAME=tf-fedora27-builder-dc-$PYTH_VERSION_SHORT \
---param=BUILDER_IMAGESTREAM=tf-fedora27-build-image-$PYTH_VERSION_SHORT:1  \
+--param=APPLICATION_NAME=tf-fedora27-builder-dc-${PYTH_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-fedora27-build-image-${PYTH_VERSION//.}:1  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=CUSTOM_BUILD="bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
 --param=GIT_TOKEN=$GIT_TOKEN \
@@ -54,8 +52,8 @@ oc new-app --template=tensorflow-build-dc  \
 
 #### To delete all resources
 ```
-oc delete  all -l appName=tf-fedora27-build-image-$PYTH_VERSION_SHORT
-oc delete  all -l appName=tf-fedora27-build-dc-$PYTH_VERSION_SHORT
-oc delete  all -l appName=tf-fedora27-build-job-$PYTH_VERSION_SHORT
+oc delete  all -l appName=tf-fedora27-build-image-${PYTH_VERSION//.}
+oc delete  all -l appName=tf-fedora27-build-dc-${PYTH_VERSION//.}
+oc delete  all -l appName=tf-fedora27-build-job-${PYTH_VERSION//.}
 ```
 
