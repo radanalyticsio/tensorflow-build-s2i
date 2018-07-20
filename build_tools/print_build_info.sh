@@ -173,8 +173,10 @@ CPUINFO_FLAGS=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' 
 #TODO get specific info
 #https://github.com/tensorflow/tensorflow/blob/master/tensorflow/core/platform/cpu_feature_guard.cc#L59
 CPU_PATTERN="[\&\/a-zA-Z0-9\-]*sse[\&\/a-zA-Z0-9\-\_]*|[\&\/a-zA-Z0-9\-]*fma[\&\/a-zA-Z0-9\-\_]*|[\&\/a-zA-Z0-9\-]*avx[\&\/a-zA-Z0-9\-\_]*"
-CPUINFO_FLAGS_SPECIFIC=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]' | grep -oE $CPU_PATTERN | tr '\n' ' ')
+CPUINFO_FLAGS_TENSORFLOW=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]' | grep -oE $CPU_PATTERN | tr '\n' ' ')
 
+CPU_FAMILY=$(lscpu |grep "CPU family" | awk '{ print $3 }')
+CPU_MODEL=$(lscpu |grep "Model:" | awk '{ print $2 }')
 
 # Print info
 TF_BUILD_INFO="{
@@ -200,7 +202,9 @@ TF_BUILD_INFO="{
 \"CUDA_toolkit_version\": \""${CUDA_TOOLKIT_VER}"\",
 \"GCC_FLAGS\": \""${GCC_FLAGSS}"\",
 \"CPUINFO_FLAGS\": \""${CPUINFO_FLAGS}"\",
-\"CPUINFO_FLAGS_SPECIFIC\": \""${CPUINFO_FLAGS_SPECIFIC}"\",
+\"CPUINFO_FLAGS_TENSORFLOW\": \""${CPUINFO_FLAGS_TENSORFLOW}"\",
+\"CPU_FAMILY\": \""${CPU_FAMILY}"\",
+\"CPU_MODEL\": \""${CPU_MODEL}"\",
 "${BUILD_ENVs}"
 "${TF_ENVs}"
 \"march\": \""${ARCH}"\"
