@@ -111,11 +111,24 @@ echo "OSVER = "$OSVER
 if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
 		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export LD_LIBRARY_PATH=/usr/include/python2.7/:/usr/lib64:/usr/lib64/python2.7:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
-		export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/:$LIBRARY_PATH &&
-		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7 &&
 		echo "PYTHON_H="`rpm -ql python27-python-devel | grep Python.h` &&
 		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH ;
+		export PATH=/opt/rh/python27/root/usr/bin${PATH:+:${PATH}}
+		export LD_LIBRARY_PATH=/usr/include/python2.7/:/usr/lib64:/usr/lib64/python2.7:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
+		export LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
+		export CPATH=/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/include/python2.7:$CPATH &&
+		export LIBRARY_PATH=/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/include/python2.7:$LIBRARY_PATH &&
+		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7 &&
+		export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages &&
+		export PKG_CONFIG_PATH=/opt/rh/python27/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} &&
+		export XDG_DATA_DIRS="/opt/rh/python27/root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" &&
+		echo "PYTHON_H="`rpm -ql rh-python35-python-devel | grep Python.h` &&
+		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
+		echo "CPATH ="$CPATH  &&
+		echo "PATH ="$PATH  &&  
+		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
+		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH  && 
+		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
 	fi
 	if [[ "$OSVER" = "fedora" ]] ; then
 		echo "$OSVER-$NB_PYTHON_VER"  &&
