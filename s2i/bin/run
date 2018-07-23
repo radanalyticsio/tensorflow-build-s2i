@@ -53,7 +53,9 @@ echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
 echo "NB_PYTHON_VER = "$NB_PYTHON_VER
 echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
 echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
-echo "GIT_DEST_REPO = "$GIT_DEST_REPO
+echo "GIT_RELEASE_REPO = "$GIT_RELEASE_REPO
+echo "PAGURE_COMMIT_REPO = "$PAGURE_COMMIT_REPO
+echo "USE_PAGURE_COMMIT ="$USE_PAGURE_COMMIT
 
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
@@ -386,16 +388,12 @@ else
 						pwd
 						cp /build_tools/*.sh .
 						cp /build_tools/*.py .
-						git clone $GIT_DEST_REPO
 						cp /workspace/bins/build_info.yaml /tmp/release_dir/
 						cp /workspace/bins/*.whl /tmp/release_dir/
-						ls -l
 						whlff=$(basename `ls *.whl`)
 						OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
 						#OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
 						RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH
-						cd wheels
-						ls -l
 						if [ $TF_NEED_CUDA = "1" ]; then
 						GIT_TAG="tf-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
 						else
@@ -404,8 +402,15 @@ else
 						NOTES=$(python /tmp/release_dir/utils.py /tmp/release_dir/build_info.yaml)
 						GIT_TOKEN="${GIT_TOKEN}"
 						FILES="../${whlff} ../build_info.yaml"
-						source ../release.sh "${GIT_TAG}" "${RELEASE_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-
+						if [ "$USE_PAGURE_COMMIT" == "1" ]; then
+							git clone $PAGURE_COMMIT_REPO
+							cd tensorflow
+							source ../pagure_commit.sh "${NOTES}" "${FILES}" "${whlff}"
+						else
+							git clone $GIT_RELEASE_REPO
+							cd wheel
+							source ../release.sh "${GIT_TAG}" "${RELEASE_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+						fi
 					} | tee -a test_wheel.log 
 				fi
 			fi

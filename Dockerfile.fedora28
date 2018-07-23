@@ -127,7 +127,7 @@ RUN mkdir -p /tf \
     && mkdir -p /workspace \
     && chown $NB_UID:root /workspace \
     && chmod 1777 /workspace \
-    && mkdir -p /home/$NB_USER \
+    && mkdir -p /home/$NB_USER/.ssh \
     && chown -R $NB_UID:root /home/$NB_USER \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 

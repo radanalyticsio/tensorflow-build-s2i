@@ -79,7 +79,7 @@ PYTH_VERSION=3.6
 
 # git token and repo
 export GIT_TOKEN=
-export GIT_DEST_REPO=
+export GIT_RELEASE_REPO=
 ```
 
 #### 1. Create the templates
@@ -129,7 +129,7 @@ oc new-app --template=tensorflow-build-job
 --param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
 --param=BAZEL_VERSION=0.11.0 \
---param=GIT_DEST_REPO=$GIT_DEST_REPO  \
+--param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO  \
 --param=GIT_TOKEN=$GIT_TOKEN
 ```
 NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2.
@@ -138,7 +138,7 @@ NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2.
 
 Import the template `tensorflow-build-job.json` into your namespace from Openshift UI.
 And then deploy from UI with appropriate values.
-Tensorflow wheel files will be pushed to `$GIT_DEST_REPO` using the token `$GIT_TOKEN`.
+Tensorflow wheel files will be pushed to `$GIT_RELEASE_REPO` using the token `$GIT_TOKEN`.
 (NOTE: This will ONLY work if the oauth token has scope of "repo".
 You can generate Personal API access token at https://github.com/settings/tokens. Minimal token scope is "repo".)
 

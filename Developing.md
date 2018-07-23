@@ -4,7 +4,7 @@
 ```
 PYTH_VERSION=3.6
 export GIT_TOKEN=
-export GIT_DEST_REPO=
+export GIT_RELEASE_REPO=
 ```
 
 #### Create the templates
@@ -33,7 +33,7 @@ oc new-app --template=tensorflow-build-job  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=CUSTOM_BUILD="bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
 --param=GIT_TOKEN=$GIT_TOKEN \
---param=GIT_DEST_REPO=$GIT_DEST_REPO \
+--param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO \
 --param=BAZEL_VERSION=0.11.0
 ```
 
@@ -45,7 +45,7 @@ oc new-app --template=tensorflow-build-dc  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=CUSTOM_BUILD="bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
 --param=GIT_TOKEN=$GIT_TOKEN \
---param=GIT_DEST_REPO=$GIT_DEST_REPO \
+--param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO \
 --param=BAZEL_VERSION=0.11.0 \
 --param=TEST_LOOP=y 
 ```

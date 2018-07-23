@@ -276,8 +276,12 @@
                                         "value": "${GIT_TOKEN}"
                                     },
                                     {
-                                        "name": "GIT_DEST_REPO",
-                                        "value": "${GIT_DEST_REPO}"
+                                        "name": "GIT_RELEASE_REPO",
+                                        "value": "${GIT_RELEASE_REPO}"
+                                    },
+                                    {
+                                        "name": "PAGURE_COMMIT_REPO",
+                                        "value": "${PAGURE_COMMIT_REPO}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -532,9 +536,15 @@
             "required": true
         },
         {
-            "name": "GIT_DEST_REPO",
-            "description": "GIT_DEST_REPO",
+            "name": "GIT_RELEASE_REPO",
+            "description": "GIT_RELEASE_REPO",
             "value": "https://github.com/AICoE/wheels.git",
+            "required": true
+        },
+        {
+            "name": "PAGURE_COMMIT_REPO",
+            "description": "PAGURE_COMMIT_REPO",
+            "value": "ssh://git@pagure.io/tensorflow.git",
             "required": true
         }
     ]

@@ -194,12 +194,26 @@
                                         "value": "${GIT_TOKEN}"
                                     },
                                     {
-                                        "name": "GIT_DEST_REPO",
-                                        "value": "${GIT_DEST_REPO}"
+                                        "name": "GIT_RELEASE_REPO",
+                                        "value": "${GIT_RELEASE_REPO}"
+                                    },
+                                    {
+                                        "name": "PAGURE_COMMIT_REPO",
+                                        "value": "$PAGURE_COMMIT_REPO}"
+                                    },
+                                    {
+                                        "name": "USE_PAGURE_COMMIT",
+                                        "value": "${USE_PAGURE_COMMIT}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${BUILDER_IMAGESTREAM}",
+                                "volumeMounts": [
+                                    {
+                                      "name": "ssh-config",
+                                      "mountPath": "/home/default/.ssh"
+                                    }
+                                ],
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "ports": [
                                     {
@@ -217,6 +231,21 @@
                                         "memory": "4Gi"
                                     }
                                 }
+                            }
+                        ],
+                        "volumes": [
+                            {
+                              "name": "ssh-config",
+                              "secret": {
+                                "secretName": "${APPLICATION_NAME}-secret",
+                                "items": [
+                                  {
+                                    "key": "ssh-privatekey",
+                                    "path": "id_rsa",
+                                    "mode": 384
+                                  }
+                                ]
+                              }
                             }
                         ]
                     }
@@ -268,6 +297,21 @@
                     "targetPort": "8080-tcp"
                 }
             }
+        },
+        {
+          "apiVersion": "v1",
+          "kind": "Secret",
+          "metadata": {
+            "name": "${APPLICATION_NAME}-secret",
+            "labels": {
+                "appTypes": "tensorflow-build-dc",
+                "appName": "${APPLICATION_NAME}"
+            }
+          },
+          "type": "kubernetes.io/ssh-auth",
+          "stringData": {
+            "ssh-privatekey": "${PAGURE_SSH_PRIVATE_KEY}"
+          }
         }
     ],
     "parameters": [
@@ -495,10 +539,28 @@
             "required": true
         },
         {
-            "name": "GIT_DEST_REPO",
-            "description": "GIT_DEST_REPO",
+            "name": "GIT_RELEASE_REPO",
+            "description": "GIT_RELEASE_REPO",
             "value": "https://github.com/AICoE/wheels.git",
             "required": true
+        },
+        {
+            "name": "PAGURE_COMMIT_REPO",
+            "description": "PAGURE_COMMIT_REPO",
+            "value": "ssh://git@pagure.io/tensorflow.git",
+            "required": true
+        },
+        {
+            "name": "PAGURE_SSH_PRIVATE_KEY",
+            "description": "SSH private key to authenticate the public key set in GitHub.",
+            "value": "",
+            "required": false
+        },
+        {
+            "name": "USE_PAGURE_COMMIT",
+            "description": "To Push wheel files to pagure tensorflow repository",
+            "required": true,
+            "value": "0"
         }
     ]
 }
