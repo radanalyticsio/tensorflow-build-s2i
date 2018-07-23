@@ -153,10 +153,6 @@
                                         "value": "${TEST_WHEEL_FILE}"
                                     },
                                     {
-                                        "name": "GIT_TOKEN",
-                                        "value": "${GIT_TOKEN}"
-                                    },
-                                    {
                                         "name": "GIT_RELEASE_REPO",
                                         "value": "${GIT_RELEASE_REPO}"
                                     },
@@ -167,6 +163,15 @@
                                     {
                                         "name": "USE_PAGURE_COMMIT",
                                         "value": "${USE_PAGURE_COMMIT}"
+                                    },
+                                    {
+                                        "name": "GIT_TOKEN",
+                                        "valueFrom": {
+                                          "secretKeyRef": {
+                                            "key": "git-token",
+                                            "name": "${APPLICATION_NAME}-secret"
+                                          }
+                                        }
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -222,7 +227,8 @@
           },
           "type": "kubernetes.io/ssh-auth",
           "stringData": {
-            "ssh-privatekey": "${PAGURE_SSH_PRIVATE_KEY}"
+            "ssh-privatekey": "${PAGURE_SSH_PRIVATE_KEY}",
+            "git-token": "${GIT_TOKEN}"
           }
         }
     ],
