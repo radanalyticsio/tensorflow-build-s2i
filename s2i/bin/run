@@ -56,11 +56,43 @@ echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
 echo "GIT_RELEASE_REPO = "$GIT_RELEASE_REPO
 echo "PAGURE_COMMIT_REPO = "$PAGURE_COMMIT_REPO
 echo "USE_PAGURE_COMMIT ="$USE_PAGURE_COMMIT
-
+echo "============================================"
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
 	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
 	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
+
+
+
+
+#pip list 2>&1 | grep "YAML\|proto\|numpy"
+echo $HOME
+
+#echo "PYTHON_LIB_PATH=`$PYTHON_BIN_PATH -c 'import site; print(site.getsitepackages()[0])'`"
+#echo "PYTHONPATH="$PYTHONPATH
+echo "which_python="`which python`
+echo "link_which_python="`ls -l $(which python) | awk '{print  $9 $10 $11}'`
+echo "link_bin_python="`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`
+echo "which_pip="`which pip`
+echo "which_pip_version="`pip --version `
+echo "which_pip_site="`pip --version |awk '{print $4}' `
+echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
+
+
+OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
+for varname in ${!TF_NEED_*}; do
+    if [ "${!varname}" = "1" ]; then
+        WORD=$(echo "${varname//TF_NEED_}" | tr '[:upper:]' '[:lower:]')
+        if [ "$varname" = "TF_NEED_CUDA" ]; then
+                WORD+=$TF_CUDA_VERSION
+        fi
+        FINAL_STR+=$WORD"+"
+    fi
+done
+TENSORFLOW_BUILD_DIR_NAME=$OSVER/${TF_GIT_BRANCH//r}/${FINAL_STR::-1}
+
+pip list 2>&1 | grep "YAML\|proto\|numpy"
+#PYTHON_LIB_PATH="$($PYTHON_BIN_PATH -c 'import sys;for pth in sys.path: print pth)')"
 
 
 if [[ $TEST_LOOP = "y" ]]
@@ -95,7 +127,7 @@ fi
 #
 #python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
 #/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages
-#/usr/lib/python2.7/site-packages
+#
 # 
 #export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
 
@@ -110,26 +142,31 @@ fi
 # only for 3.6
 # /opt/rh/rh-python36/root/usr/lib/python3.6/site-packages/
 
+#PYTHON_VERSION_OUTPUT=`python --version 2>&1` \n\
+#export PYTHON_LIB_PATH="$(echo /usr/lib/python${PYTHON_VERSION_OUTPUT:7:3}/site-packages)" \n\
+#export PYTHON_INCLUDE_PATH="$(echo /usr/include/python${PYTHON_VERSION_OUTPUT:7:3}*)" \n\
+
 OSVER=$(. /etc/os-release;echo $ID)
 echo "OSVER = "$OSVER
 if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
 	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
 		echo "$OSVER-$NB_PYTHON_VER"  &&
 		export LD_LIBRARY_PATH=/usr/include/python2.7/:/usr/lib64:/usr/lib64/python2.7:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
--		export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/:$LIBRARY_PATH &&
+		#export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/:$LIBRARY_PATH &&
 		echo "PYTHON_H="`rpm -ql python27-python-devel | grep Python.h` &&
+		echo "PYTHON_H="`rpm -ql python-devel | grep Python.h` &&
 		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH ;
-		export PATH=/opt/rh/python27/root/usr/bin${PATH:+:${PATH}}
+		#export PATH=/opt/rh/python27/root/usr/bin${PATH:+:${PATH}}
+		#export PYTHONPATH=/usr/lib/python2.7/site-packages:/usr/lib64/python2.7/site-packages:$PYTHONPATH
 		export LD_LIBRARY_PATH=/usr/include/python2.7/:/usr/lib:/usr/lib/python2.7:/usr/lib64:/usr/lib64/python2.7:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
 		export LD_LIBRARY_PATH=/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
 		export CPATH=/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/include/python2.7:$CPATH &&
 		export LIBRARY_PATH=/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/include/python2.7:$LIBRARY_PATH &&
 		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7 &&
-		export PYTHON_LIB_PATH=/usr/lib64/python2.7/site-packages &&
-		export PKG_CONFIG_PATH=/opt/rh/python27/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} &&
-		export XDG_DATA_DIRS="/opt/rh/python27/root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" &&
-		echo "PYTHON_H="`rpm -ql rh-python35-python-devel | grep Python.h` &&
+		#export PKG_CONFIG_PATH=/opt/rh/python27/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} &&
+		#export XDG_DATA_DIRS="/opt/rh/python27/root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" &&
 		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
+		echo "PYTHONPATH ="$PYTHONPATH  &&
 		echo "CPATH ="$CPATH  &&
 		echo "PATH ="$PATH  &&  
 		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
@@ -215,7 +252,8 @@ if [ "$NB_PYTHON_VER" = "3.6" ] ; then
 fi
 
 echo | gcc -E -Wp,-v -
-
+echo "which_pip_version="`pip --version `
+pip list 2>&1 | grep "yaml\|proto\|numpy"
 
 ### Setup Bazel
 cd /workspace
@@ -324,7 +362,7 @@ else
 		    cp /workspace/bins/*.whl /tmp/test_wheel && cp /workspace/bins/*.yaml /tmp/test_wheel 
 		    cd /tmp/test_wheel && pwd && ls -l 
 		    
-		 
+		 	echo "which_pip_version="`pip --version `
 		    (pip install *.whl --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
 		    if (( $? )); then
 			    echo "####################################"
@@ -352,6 +390,7 @@ else
 						ls -l *.dist-info/
 						echo
 						echo "METADATA..."
+						pwd
 						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA 
 						sed -i "s/Platform.*/Platform: $(cat /etc/redhat-release)\\nKernel: $(uname -or |awk '{print $1;}')/" *.dist-info/METADATA
 						sed -i "s/Author-email:.*/Author-email: smodeel@redhat.com/" *.dist-info/METADATA
@@ -370,6 +409,7 @@ else
 						unzip -q *.whl
 						echo
 						echo "New METADATA..."
+						pwd
 						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA
 						ls -l *.dist-info | grep build_info.yaml
 						whlff=$(basename `ls  *.whl` .whl )
@@ -395,21 +435,22 @@ else
 						#OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
 						RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH
 						if [ $TF_NEED_CUDA = "1" ]; then
-						GIT_TAG="tf-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
+							GIT_TAG="tf-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
 						else
-						GIT_TAG="tf-${TF_GIT_BRANCH}-cpu-$(date +%Y-%m-%d_%H%M%S)"
+							GIT_TAG="tf-${TF_GIT_BRANCH}-cpu-$(date +%Y-%m-%d_%H%M%S)"
 						fi
 						NOTES=$(python /tmp/release_dir/utils.py /tmp/release_dir/build_info.yaml)
 						GIT_TOKEN="${GIT_TOKEN}"
 						FILES="../${whlff} ../build_info.yaml"
+						ls -l
 						if [ "$USE_PAGURE_COMMIT" == "1" ]; then
 							git clone $PAGURE_COMMIT_REPO
 							cd tensorflow
 							source ../pagure_commit.sh "${NOTES}" "${FILES}" "${whlff}"
 						else
 							git clone $GIT_RELEASE_REPO
-							cd wheel
-							source ../release.sh "${GIT_TAG}" "${RELEASE_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+							cd wheels
+							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
 						fi
 					} | tee -a test_wheel.log 
 				fi

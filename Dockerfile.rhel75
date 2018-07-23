@@ -64,7 +64,7 @@ ADD entrypoint /entrypoint
 ADD build_tools /build_tools
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
+	#&& grep -vIr "\x00" -- /build_tools/ \
     && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
@@ -78,6 +78,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
     && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
     && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
     && echo "PATH=$PATH" \
     && echo "PYTHON_VER=$PYTHON_VER" \
@@ -96,6 +97,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
     && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
     && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
     && echo "PATH=$PATH" \
     && echo "PYTHON_VER=$PYTHON_VER" \
@@ -122,6 +124,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
     && echo "which_pip="`which pip` \
     && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
     && echo "PATH=$PATH" \
     && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
     && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \

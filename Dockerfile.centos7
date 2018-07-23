@@ -76,6 +76,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
     && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
     && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
     && echo "PATH=$PATH" \
     && echo "PYTHON_VER=$PYTHON_VER" \
@@ -99,6 +100,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
     && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
     && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
     && echo "PATH=$PATH" \
     && echo "PYTHON_VER=$PYTHON_VER" \
@@ -113,9 +115,17 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 	&& if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/include/ && ls -l /opt/rh/rh-python35/root/usr/lib64/ ; fi \
     && if [ "$PYTHON_VER" = "3.6" ] ; then echo "PYTHON_H="`rpm -ql rh-python36-python-devel | grep Python.h` ; fi \
     && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/include/ && ls -l /opt/rh/rh-python36/root/usr/lib64/ ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip_ver="`pip --version` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
     && echo "PATH=$PATH" \
     && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
     && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
     && ls -l /usr/bin/python* \
     && echo "-----IMAGE_TEST--------" \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
