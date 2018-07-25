@@ -449,10 +449,12 @@ else
 							cd tensorflow
 							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
 						elif [[ "$USE_BOTH" == "1" ]]; then
-							(git clone $PAGURE_COMMIT_REPO;
-							cd tensorflow;
-							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}";) & (git clone $GIT_RELEASE_REPO;
-							cd wheels;
+							git clone $PAGURE_COMMIT_REPO
+							cd tensorflow
+							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
+							cd ..
+							git clone $GIT_RELEASE_REPO
+							cd wheels
 							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}")
 						else
 							git clone $GIT_RELEASE_REPO
