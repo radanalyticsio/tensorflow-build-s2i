@@ -165,6 +165,10 @@
                                         "value": "${USE_PAGURE_COMMIT}"
                                     },
                                     {
+                                        "name": "USE_BOTH",
+                                        "value": "${USE_BOTH}"
+                                    },
+                                    {
                                         "name": "GIT_TOKEN",
                                         "valueFrom": {
                                           "secretKeyRef": {
@@ -455,7 +459,12 @@
             "description": "To Push wheel files to pagure tensorflow repository",
             "required": true,
             "value": "0"
-
+        },
+        {
+            "name": "USE_BOTH",
+            "description": "Push wheel files to Pagure tensorflow repository and Release on AICoE Wheels repository",
+            "required": true,
+            "value": "0"
         }
     ]
 }

@@ -195,11 +195,15 @@
                                     },
                                     {
                                         "name": "PAGURE_COMMIT_REPO",
-                                        "value": "$PAGURE_COMMIT_REPO}"
+                                        "value": "${PAGURE_COMMIT_REPO}"
                                     },
                                     {
                                         "name": "USE_PAGURE_COMMIT",
                                         "value": "${USE_PAGURE_COMMIT}"
+                                    },
+                                    {
+                                        "name": "USE_BOTH",
+                                        "value": "${USE_BOTH}"
                                     },
                                     {
                                         "name": "GIT_TOKEN",
@@ -565,6 +569,12 @@
         {
             "name": "USE_PAGURE_COMMIT",
             "description": "To Push wheel files to pagure tensorflow repository",
+            "required": true,
+            "value": "0"
+        },
+        {
+            "name": "USE_BOTH",
+            "description": "Push wheel files to Pagure tensorflow repository and Release on AICoE Wheels repository",
             "required": true,
             "value": "0"
         }

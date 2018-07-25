@@ -1,27 +1,16 @@
 #!/bin/sh
-GIT_COMMIT_MSG="$1"
-FILES="$2"
-WHFLL="$3"
+TENSORFLOW_BUILD_DIR_NAME="$1"
+GIT_COMMIT_MSG="$2"
+FILES="$3"
+WHFLL="$4"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# Naming the directory according to the naming convention
-for varname in ${!TF_NEED_*}; do
-    if [ "${!varname}" = "1" ]; then
-        WORD=$(echo "${varname//TF_NEED_}" | tr '[:upper:]' '[:lower:]')
-        if [ "$varname" = "TF_NEED_CUDA" ]; then
-                WORD+=$TF_CUDA_VERSION
-        fi
-        FINAL_STR+=$WORD"+"
-    fi
-done
-TENSORFLOW_BUILD_DIR_NAME=$OSVER/${TF_GIT_BRANCH//r}/${FINAL_STR::-1}
-
-echo "=============================="
-echo "TENSORFLOW_BUILD_DIR_NAME="$TENSORFLOW_BUILD_DIR_NAME
-echo "NOTES="$GIT_COMMIT_MSG
-echo "FILES="$FILES
-echo "BRANCH="$BRANCH
-echo "=============================="
+# echo "=============================="
+# echo "TENSORFLOW_BUILD_DIR_NAME="$TENSORFLOW_BUILD_DIR_NAME
+# echo "NOTES="$GIT_COMMIT_MSG
+# echo "FILES="$FILES
+# echo "BRANCH="$BRANCH
+# echo "=============================="
 
 
 # Config: Script commit files on behalf of

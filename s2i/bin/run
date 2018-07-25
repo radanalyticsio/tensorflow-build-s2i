@@ -56,6 +56,7 @@ echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
 echo "GIT_RELEASE_REPO = "$GIT_RELEASE_REPO
 echo "PAGURE_COMMIT_REPO = "$PAGURE_COMMIT_REPO
 echo "USE_PAGURE_COMMIT ="$USE_PAGURE_COMMIT
+echo "USE_BOTH ="$USE_BOTH
 echo "============================================"
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
@@ -78,7 +79,7 @@ echo "which_pip_version="`pip --version `
 echo "which_pip_site="`pip --version |awk '{print $4}' `
 echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
 
-
+# Naming the directory according to the naming convention
 OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
 for varname in ${!TF_NEED_*}; do
     if [ "${!varname}" = "1" ]; then
@@ -443,10 +444,16 @@ else
 						GIT_TOKEN="${GIT_TOKEN}"
 						FILES="../${whlff} ../build_info.yaml"
 						ls -l
-						if [ "$USE_PAGURE_COMMIT" == "1" ]; then
+						if [[ "$USE_PAGURE_COMMIT" == "1" ]]; then
 							git clone $PAGURE_COMMIT_REPO
 							cd tensorflow
-							source ../pagure_commit.sh "${NOTES}" "${FILES}" "${whlff}"
+							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
+						elif [[ "$USE_BOTH" == "1" ]]; then
+							(git clone $PAGURE_COMMIT_REPO;
+							cd tensorflow;
+							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}";) & (git clone $GIT_RELEASE_REPO;
+							cd wheels;
+							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}")
 						else
 							git clone $GIT_RELEASE_REPO
 							cd wheels
