@@ -5,6 +5,7 @@
 PYTH_VERSION=3.6
 export GIT_TOKEN=
 export GIT_RELEASE_REPO=
+export PAGURE_SSH_PRIVATE_KEY="$(cat dummy_pagure_ssh_key)"
 ```
 
 #### Create the templates
@@ -22,6 +23,7 @@ oc new-app --template=tensorflow-build-image  \
 --param=DOCKER_FILE_PATH=Dockerfile.fedora27  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=BAZEL_VERSION=0.11.0 \
+--param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=VERSION=1 
 ```
 
@@ -34,6 +36,7 @@ oc new-app --template=tensorflow-build-job  \
 --param=CUSTOM_BUILD="bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
 --param=GIT_TOKEN=$GIT_TOKEN \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO \
+--param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=BAZEL_VERSION=0.11.0
 ```
 
@@ -47,6 +50,7 @@ oc new-app --template=tensorflow-build-dc  \
 --param=GIT_TOKEN=$GIT_TOKEN \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO \
 --param=BAZEL_VERSION=0.11.0 \
+--param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=TEST_LOOP=y 
 ```
 
