@@ -98,7 +98,6 @@ oc new-app --template=tensorflow-build-image
 --param=DOCKER_FILE_PATH=Dockerfile.rhel75  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=VERSION=2 \
---param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=BAZEL_VERSION=0.11.0
 ```
 The above command creates a tensorflow builder image `APPLICATION_NAME:VERSION` for specific OS.

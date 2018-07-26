@@ -23,7 +23,6 @@ oc new-app --template=tensorflow-build-image  \
 --param=DOCKER_FILE_PATH=Dockerfile.fedora27  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=BAZEL_VERSION=0.11.0 \
---param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=VERSION=1 
 ```
 

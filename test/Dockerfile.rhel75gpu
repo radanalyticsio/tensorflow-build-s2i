@@ -28,6 +28,7 @@ COPY cuda.repo /etc/yum.repos.d/cuda.repo
 ENV CUDA_VERSION 9.2.148
 
 ENV CUDA_PKG_VERSION 9-2-$CUDA_VERSION-1
+RUN yum-config-manager --disable qci-1.1-for-rhel-7-beta-rpms
 RUN yum install -y \
         cuda-cudart-$CUDA_PKG_VERSION && \
     ln -s cuda-9.2 /usr/local/cuda && \
@@ -143,7 +144,6 @@ ADD entrypoint /entrypoint
 ADD test_tensorflow /test_tensorflow
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
     && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
@@ -273,7 +273,7 @@ RUN mkdir -p /tf \
     && chown -R $NB_UID:root /home/$NB_USER \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
-COPY ./s2i/bin/ /usr/libexec/s2i
+#COPY ./s2i/bin/ /usr/libexec/s2i
 
 # NO CLEANUP
 # Donot add below commands
