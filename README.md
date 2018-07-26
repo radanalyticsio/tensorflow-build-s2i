@@ -21,7 +21,7 @@ This is because
 
 For example:
 
-```--copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 ```
+```--copt=-mavx --copt=-mavx2 --copt=-mavx512f --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 ```
 
 using above options in `CUSTOM_BUILD` will build the package with optimizations for `FMA, AVX and SSE`.
 
@@ -60,7 +60,7 @@ GPU is not yet supported.
 * `TF_SET_ANDROID_WORKSPACE`:=0
 
 Here is the default build command used to build tensorflow. 
-* `CUSTOM_BUILD`:=`bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package`
+* `CUSTOM_BUILD`:=`bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package`
 
 Following should be left blank for a build job.
 * `TEST_LOOP`:=

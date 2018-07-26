@@ -189,12 +189,12 @@
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "resources": {
                                     "limits": {
-                                        "cpu": "6",
-                                        "memory": "8Gi"
+                                        "cpu": "8",
+                                        "memory": "10Gi"
                                     },
                                     "requests": {
-                                        "cpu": "3",
-                                        "memory": "6Gi"
+                                        "cpu": "6",
+                                        "memory": "8Gi"
                                     }
                                 }
                             }
@@ -253,7 +253,7 @@
         {
             "name": "CUSTOM_BUILD",
             "description": "Set to custom BUILD command",
-            "value": "bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package",
+            "value": "bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package",
             "required": false
         },
         {
@@ -432,7 +432,7 @@
         },
         {
             "name": "GIT_TOKEN",
-            "description": "GIT_TOKEN",
+            "description": "GIT_TOKEN value is required if you release to github",
             "value": "",
             "required": true
         },
