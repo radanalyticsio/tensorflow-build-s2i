@@ -1,0 +1,72 @@
+#!/bin/bash
+
+echo "TEST Tensorflow wheel...."
+
+
+TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
+	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
+	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
+
+
+echo "WHEEL_FILE=$WHEEL_FILE"
+echo "TEST_LOOP=$TEST_LOOP"
+echo "NB_PYTHON_VER=$NB_PYTHON_VER"
+
+echo "===================================="
+
+echo "PWD="`pwd`
+echo "which_python="`which python` 
+echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" 
+echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" 
+echo "which_pip="`which pip` 
+echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" 
+echo "PATH=$PATH" 
+echo "PYTHON_VER=$PYTHON_VER" 
+echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" 
+echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" 
+echo "CUDA_HOME=$CUDA_HOME"
+echo "CUDA_PATH=$CUDA_PATH"
+
+echo "===================================="
+
+ls -l /usr/local/cudnn/include/cudnn.h
+ls -l /usr/local/cuda/include/cudnn.h
+ls -l /usr/local/cuda/lib64 
+ls -l /usr/local/cuda/lib64/stubs/libcuda.so 
+ls -l /usr/local/cuda/lib64/stubs/libcuda.so.1 
+
+
+echo "===================================="
+
+(python -c "$TEST_CMD") 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
+if (( $? )); then
+	echo "####################################"
+	echo "      TEST_WHEEL_FILE  ERROR     	  "
+	echo "####################################"
+	echo "Tensorflow TEST_CMD Failed!"
+else
+    echo "####################################"
+	echo "      TEST_WHEEL_FILE  SUCCESS      "
+	echo "####################################"
+
+
+
+cat test_wheel.log | grep cuda
+
+
+
+### enable TEST_LOOP only which deployment config and NOT with Jobs. 
+if [[ $TEST_LOOP = "y" ]]
+then
+	echo "####################################"
+	echo "      DEV/TEST MODE.....       	  "
+	echo "####################################"
+    echo "Starting a infinite while loop to debug in console terminal\n"
+    while :
+	do
+		echo "Press [CTRL+C] to stop.."
+		sleep 1
+	done
+fi
+
+

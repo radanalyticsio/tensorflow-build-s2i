@@ -1,0 +1,162 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "tensorflow-test-image",
+        "annotations": {
+            "description": "Template to test Tensorflow build wheel.",
+            "tags": "tensorflow-build-image"
+        }
+    },
+    "objects": [
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appTypes": "tensorflow-test-image",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": true
+                }
+            }
+        },
+        {
+            "kind": "BuildConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appTypes": "tensorflow-test-image",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange"
+                    },
+                    {
+                        "type": "Generic",
+                        "generic" : {
+                        	"secret": "${GENERIC_WEBHOOK_SECRET}"
+                        }
+                    }
+                ],
+                "source": {
+                    "type": "Git",
+                    "git": {
+                        "uri": "${SOURCE_REPOSITORY}",
+                        "ref": "master"
+                    }
+                },
+                "strategy": {
+                    "type": "Docker",
+                    "dockerStrategy": {
+                    	"noCache": true,
+                        "dockerfilePath": "${DOCKER_FILE_PATH}",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "${S2I_IMAGE}"
+                        },
+                        "env": [
+                                    {
+                                        "name": "NB_PYTHON_VER",
+                                        "value": "${NB_PYTHON_VER}"
+                                    },
+                                    {
+                                        "name": "WHEEL_FILE",
+                                        "value": "${WHEEL_FILE}"
+                                    },
+                                    {
+                                        "name": "TEST_LOOP",
+                                        "value": "${TEST_LOOP}"
+                                    }
+                        ]
+                    }
+                },
+                "output": {
+                    "to": {
+                        "kind": "ImageStreamTag",
+                        "name": "${APPLICATION_NAME}:${VERSION}"
+                    }
+                },
+                "resources": {
+                    "limits": {
+                        "cpu": "6",
+                        "memory": "8Gi"
+                    },
+                    "requests": {
+                        "cpu": "3",
+                        "memory": "4Gi"
+                    }
+                }
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APPLICATION_NAME",
+            "description": "The name of the application.",
+            "value": "tensorflow-test-image",
+            "from": "[a-zA-Z0-9]{10}",
+            "required": true
+        },
+        {
+            "name": "SOURCE_REPOSITORY",
+            "description": "Git repository for source.",
+            "value": "https://github.com/sub-mod/empty-repo.git",
+            "required": true
+        },
+        {
+            "name": "S2I_IMAGE",
+            "description": "registry.fedoraproject.org/f27/s2i-core, registry.fedoraproject.org/f28/s2i-core, registry.access.redhat.com/rhscl/s2i-core-rhel7",
+            "value": "registry.fedoraproject.org/f27/s2i-core",
+            "required": true
+        },
+        {
+            "name": "DOCKER_FILE_PATH",
+            "description": "test/Dockerfile.fedora27, test/Dockerfile.fedora28, test/Dockerfile.rhel75.",
+            "value": "test/Dockerfile.rhel75gpu",
+            "required": true
+        },
+        {
+            "name": "NB_PYTHON_VER",
+            "description": "Python version 2.7,3.5,3.6 ",
+            "value": "2.7",
+            "required": true
+        },
+        {
+            "name": "WHEEL_FILE",
+            "description": "WHEEL_FILE",
+            "value": "https://github.com/AICoE/wheels/releases/download/tf-r1.9-cpu-2018-07-24_160352/tensorflow-1.9.0-cp27-cp27mu-linux_x86_64.whl",
+            "required": true
+        },
+        {
+            "name": "GENERIC_WEBHOOK_SECRET",
+            "description": "A secret string used to configure the Generic webhook.",
+            "value": "tf-build-secret",
+            "required": false
+        },
+        {
+            "name": "VERSION",
+            "description": "Version of the build image, i.e docker image tag",
+            "value": "latest",
+            "required": true
+        },
+        {
+            "name": "TEST_LOOP",
+            "description": "while loop",
+            "value": "n",
+            "required": true
+        }
+    ]
+}
+
