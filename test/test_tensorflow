@@ -11,6 +11,8 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 echo "WHEEL_FILE=$WHEEL_FILE"
 echo "TEST_LOOP=$TEST_LOOP"
 echo "NB_PYTHON_VER=$NB_PYTHON_VER"
+echo "CUSTOM_INSTALL=$CUSTOM_INSTALL"
+echo "NEW_WHEEL_FILE=$NEW_WHEEL_FILE"
 
 echo "===================================="
 
@@ -38,6 +40,55 @@ ls -l /usr/local/cuda/lib64/stubs/libcuda.so.1
 
 echo "===================================="
 
+
+if [[ $CUSTOM_INSTALL = "y" ]]
+then
+	(pip install $NEW_WHEEL_FILE --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
+	if (( $? )); then
+		echo "####################################"
+		echo "      CUSTOM_INSTALL  ERROR!!   	  "
+		echo "####################################"
+		echo "Unable to pip install the wheel file."
+	else
+		echo "####################################"
+		echo "      CUSTOM_INSTALL  SUCCESS		  "
+		echo "####################################"
+	fi
+fi
+
+echo "===================================="
+
+cat <<EOF > /tmp/check_tf.py
+from __future__ import print_function
+import imp
+import sys
+try:
+	imp.find_module('tensorflow')
+	import tensorflow as tf;
+	print("tf.VERSION = %s" % tf.VERSION)
+	print("tf.GIT_VERSION = %s" % tf.GIT_VERSION)
+	print("tf.COMPILER_VERSION = %s" % tf.GIT_VERSION)
+except ImportError:
+	print("tf.VERSION = ")
+	print("tf.GIT_VERSION = ")
+	print("tf.COMPILER_VERSION = ")
+	
+EOF
+check_tf="$(python /tmp/check_tf.py >&1)"
+check_tf="${check_tf// = /=}"
+
+CHECK_TF=""
+for word in $check_tf
+do
+	IFS='='        # space is set as delimiter
+	read -ra ADDR <<< "$word"    # str is read into an array as tokens separated by IFS
+	CHECK_TF+="\"${ADDR[0]}\": \"${ADDR[1]}\","
+done
+
+echo "CHECK_TF=$CHECK_TF"
+
+echo "===================================="
+
 (python -c "$TEST_CMD") 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
 	echo "####################################"
@@ -45,15 +96,16 @@ if (( $? )); then
 	echo "####################################"
 	echo "Tensorflow TEST_CMD Failed!"
 else
-    echo "####################################"
-	echo "      TEST_WHEEL_FILE  SUCCESS      "
-	echo "####################################"
+    echo "#####################################"
+	echo "      TEST_WHEEL_FILE  CUSTOM_INSTALL"
+	echo "#####################################"
+fi
 
+echo "===================================="
 
+cat test_wheel.log
 
-cat test_wheel.log | grep cuda
-
-
+echo "===================================="
 
 ### enable TEST_LOOP only which deployment config and NOT with Jobs. 
 if [[ $TEST_LOOP = "y" ]]
@@ -69,4 +121,5 @@ then
 	done
 fi
 
-
+echo "end"
+exit 0
