@@ -64,7 +64,6 @@ ADD entrypoint /entrypoint
 ADD build_tools /build_tools
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	#&& grep -vIr "\x00" -- /build_tools/ \
     && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
@@ -132,6 +131,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "PYTHON_VER=$PYTHON_VER" \
     && ls -l /usr/bin/python* \
     && echo "-----IMAGE_TEST--------" \
+    && mkdir -p /home/$NB_USER/.ssh \
+    && echo 'alias ll="ls -l"' >> /home/$NB_USER/.bashrc \
+    && ssh-keyscan pagure.io >> /home/$NB_USER/.ssh/known_hosts \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
@@ -181,7 +183,6 @@ RUN mkdir -p /tf \
     && mkdir -p /workspace \
     && chown $NB_UID:root /workspace \
     && chmod 1777 /workspace \
-    && mkdir -p /home/$NB_USER \
     && chown -R $NB_UID:root /home/$NB_USER \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 

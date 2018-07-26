@@ -112,7 +112,7 @@
         {
             "name": "SOURCE_REPOSITORY",
             "description": "Git repository for source.",
-            "value": "https://github.com/sub-mod/empty-repo.git",
+            "value": "https://github.com/thoth-station/tensorflow-build-s2i.git",
             "required": true
         },
         {

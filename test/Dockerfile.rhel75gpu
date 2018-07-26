@@ -141,7 +141,7 @@ ENV NCCL_INSTALL_PATH=/usr/local/nccl-2.2
 
 
 ADD entrypoint /entrypoint
-ADD test_tensorflow /test_tensorflow
+ADD test/test_tensorflow /test_tensorflow
 
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
