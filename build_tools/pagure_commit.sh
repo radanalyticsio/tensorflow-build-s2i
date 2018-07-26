@@ -14,8 +14,8 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
 
 # Config: Script commit files on behalf of
-git config --global user.name "Harshad Reddy Nalla"
-git config --global user.email "hnalla@redhat.com"
+git config --global user.name "Red Hat's AICoE"
+git config --global user.email "goern+aicoe@redhat.com"
 
 
 CHECK_LOCAL_AND_UPSTREAM(){
