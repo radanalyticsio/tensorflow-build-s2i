@@ -16,11 +16,13 @@ echo "NEW_WHEEL_FILE=$NEW_WHEEL_FILE"
 echo "===================================="
 
 echo "PWD="`pwd`
-echo "which_python="`which python` 
-echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" 
-echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" 
-echo "which_pip="`which pip` 
-echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" 
+echo "which_python="`which python`
+echo "link_which_python="`ls -l $(which python) | awk '{print  $9 $10 $11}'`
+echo "link_bin_python="`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`
+echo "which_pip="`which pip`
+echo "which_pip_version="`pip --version `
+echo "which_pip_site="`pip --version |awk '{print $4}' `
+echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
 echo "PATH=$PATH" 
 echo "PYTHON_VER=$PYTHON_VER" 
 echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" 
