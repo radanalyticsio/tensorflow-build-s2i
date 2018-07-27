@@ -28,6 +28,7 @@ COPY cuda.repo /etc/yum.repos.d/cuda.repo
 ENV CUDA_VERSION 9.2.148
 
 ENV CUDA_PKG_VERSION 9-2-$CUDA_VERSION-1
+RUN yum-config-manager --disable qci-1.1-for-rhel-7-beta-rpms
 RUN yum install -y \
         cuda-cudart-$CUDA_PKG_VERSION && \
     ln -s cuda-9.2 /usr/local/cuda && \
@@ -297,6 +298,7 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
+ADD test/test_tensorflow /test_tensorflow
 
 # NO CLEANUP
 # Donot add below commands

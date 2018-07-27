@@ -8,7 +8,6 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
 
 
-echo "WHEEL_FILE=$WHEEL_FILE"
 echo "TEST_LOOP=$TEST_LOOP"
 echo "NB_PYTHON_VER=$NB_PYTHON_VER"
 echo "CUSTOM_INSTALL=$CUSTOM_INSTALL"
@@ -49,6 +48,7 @@ then
 		echo "      CUSTOM_INSTALL  ERROR!!   	  "
 		echo "####################################"
 		echo "Unable to pip install the wheel file."
+		exit 1
 	else
 		echo "####################################"
 		echo "      CUSTOM_INSTALL  SUCCESS		  "
@@ -95,15 +95,18 @@ if (( $? )); then
 	echo "      TEST_WHEEL_FILE  ERROR     	  "
 	echo "####################################"
 	echo "Tensorflow TEST_CMD Failed!"
+	exit 1
 else
     echo "#####################################"
-	echo "      TEST_WHEEL_FILE  CUSTOM_INSTALL"
+	echo "      TEST_WHEEL_FILE  SUCCESS	   "
 	echo "#####################################"
 fi
 
 echo "===================================="
 
-cat test_wheel.log
+cat test_wheel.log | grep -i "nvidia"
+cat test_wheel.log | grep -i "gpu"
+cat test_wheel.log | grep -i "tesla"
 
 echo "===================================="
 

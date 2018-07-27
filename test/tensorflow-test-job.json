@@ -46,7 +46,7 @@
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
-                                "image": "${TEST_IMAGESTREAM}",
+                                "image": "${BUILDER_IMAGESTREAM}",
                                 "command": ["/entrypoint", "/test_tensorflow"],
                                 "resources": {
                                     "limits": {
@@ -75,8 +75,8 @@
             "required": true
         },
         {
-            "name": "TEST_IMAGESTREAM",
-            "description": "tensorflow-test-image-fc27-36:latest, tensorflow-test-image-rhel75-36:2",
+            "name": "BUILDER_IMAGESTREAM",
+            "description": "tensorflow-build-image-fc27-36:latest, tensorflow-build-image-rhel75-36:2",
             "value": "",
             "required": true
         },
@@ -89,14 +89,14 @@
         {
             "name": "CUSTOM_INSTALL",
             "description": " CUSTOM_INSTALL of new wheel file",
-            "value": "n",
-            "required": false
+            "value": "y",
+            "required": true
         },
         {
             "name": "NEW_WHEEL_FILE",
-            "description": " new wheel file",
+            "description": " new wheel file URL",
             "value": "",
-            "required": false
+            "required": true
         }
     ]
 }
