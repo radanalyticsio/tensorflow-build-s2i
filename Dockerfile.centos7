@@ -182,6 +182,7 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
+ADD test/test_tensorflow /test_tensorflow
 
 # NO CLEANUP
 # Donot add below commands
