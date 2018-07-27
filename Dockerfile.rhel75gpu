@@ -244,6 +244,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "PYTHON_VER=$PYTHON_VER" \
     && ls -l /usr/bin/python* \
     && echo "-----IMAGE_TEST--------" \
+    && mkdir -p /home/$NB_USER/.ssh \
+    && echo 'alias ll="ls -l"' >> /home/$NB_USER/.bashrc \
+    && ssh-keyscan pagure.io >> /home/$NB_USER/.ssh/known_hosts \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
