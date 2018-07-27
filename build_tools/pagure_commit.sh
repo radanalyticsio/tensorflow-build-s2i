@@ -60,12 +60,15 @@ PUSH_DATA(){
 		cp $f $TENSORFLOW_BUILD_DIR_NAME/
 	done
 	git status
+	echo "=============================="
 	CHECK_LOCAL_AND_UPSTREAM
 	UPDATE_INDEX_HTML
 	git add $TENSORFLOW_BUILD_DIR_NAME && git add index.html
 	git status
+	echo "=============================="
 	git commit -m "$GIT_COMMIT_MSG"
 	git status
+	echo "=============================="
 	git push origin $BRANCH || {
 		git pull --rebase origin $BRANCH
 		git push origin $BRANCH
