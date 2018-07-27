@@ -1,0 +1,110 @@
+---
+- name: Playbook to provision TensorFlow Builds
+  tags:
+    - openshift
+    - thoth
+
+  hosts: localhost
+  vars:
+    OCP_URL: "{{ lookup('env','OCP_URL') }}"
+    OCP_TOKEN: "{{ lookup('env','OCP_TOKEN') }}"
+    
+    TENSORFLOW_APPLICATION_NAMESPACE: "{{ lookup('env','TENSORFLOW_APPLICATION_NAMESPACE') }}"
+
+    PYTH_VERSION: "{{ lookup('env','PYTH_VERSION') }}"
+    GIT_TOKEN: "{{ lookup('env','GIT_TOKEN') }}"
+    PAGURE_SSH_PRIVATE_KEY: "{{ lookup('file', '{{ PAGURE_SSH_PRIVATE_KEY_PATH }}') }}"
+
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: login to OpenShift using provided token
+      command: "oc login {{ OCP_URL }} --insecure-skip-tls-verify=true --token {{ OCP_TOKEN }}"
+      changed_when: false
+
+    - name: "make sure to use project {{ TENSORFLOW_APPLICATION_NAMESPACE }}"
+      command: "oc project {{ TENSORFLOW_APPLICATION_NAMESPACE }}"
+      register: project_exists
+      ignore_errors: true
+  
+    - name: create BuildConfig templates
+      command: "oc create --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE  }}  --filename tensorflow-build-image.json"
+      ignore_errors: true
+
+    - name: create Job templates
+      command: "oc create --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE  }}  --filename tensorflow-build-job.json"
+      ignore_errors: true
+
+
+    # ============= #
+    # CREATE IMAGES #
+    # ============= #
+      
+    - name: "check if BuildConfig exists"
+      command: "oc get buildconfig --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE }} tf-{{ item }}-build-image-{{ PYTH_VERSION | replace('.', '') }}"
+      register: buildconfig_exists
+      ignore_errors: true
+      changed_when: false
+      with_items:
+        - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+
+    - name: create tensorflow BuildConfig
+      command: oc new-app --namespace "{{ TENSORFLOW_APPLICATION_NAMESPACE }}" --template=tensorflow-build-image \  
+        -p APPLICATION_NAME="tf-{{ item.0 }}-build-image-{{ PYTH_VERSION | replace('.', '') }}" \
+        -p S2I_IMAGE="{{ item.1 }}" \
+        -p DOCKER_FILE_PATH="Dockerfile.{{ item.0 }}" \
+        -p NB_PYTHON_VER="{{ PYTH_VERSION }}" \
+        -p VERSION=1
+      ignore_errors: true
+      with_together:
+        - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+        - ['registry.fedoraproject.org/f27/s2i-core', 'openshift/base-centos7', 'registry.fedoraproject.org/f28/s2i-core', 'registry.access.redhat.com/rhscl/s2i-core-rhel7']
+        - "{{ buildconfig_exists.results }}"
+      when: buildconfig_exists is failed and item.2.stdout == ""
+
+    # ============= #
+    # CREATE SECRET #
+    # ============= #
+
+    # - name: "check if required tensorflow secret exists"
+    #   command: "oc get secret --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE }} tf-{{ item }}-build-job-{{ PYTH_VERSION | replace('.', '') }}-secret"
+    #   register: secret_exists
+    #   ignore_errors: true
+
+    # - name: "create Secret with Pagure SSH Key and Github Access Token"
+    #   command: oc create secret --namespace "{{ TENSORFLOW_APPLICATION_NAMESPACE }}" generic tf-{{ item }}-build-job-{{ PYTH_VERSION | replace('.', '') }}-secret \
+    #     --from-file=ssh-privatekey="{{ PAGURE_SSH_PRIVATE_KEY_PATH }}" \
+    #     --from-literal=git-token="{{ GIT_TOKEN }}" \
+    #     --type=opaque 
+    #   with_together:
+    #    - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+    #    - "{{ secret_exists.results }}"
+    #   when: secret_exists is failed and item.1.stdout == ""
+
+    # ============= #
+    #  CREATE JOBS  #
+    # ============= #
+   
+    - name: "check if Job exists"
+      command: "oc get job --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE }} tf-{{ item }}-build-job-{{ PYTH_VERSION | replace('.', '') }}"
+      register: job_exists
+      ignore_errors: true
+      changed_when: false
+      with_items:
+        - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+
+    
+    - name: "create tensorflow build job"
+      command: oc new-app --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE }} --template=tensorflow-build-job \
+        -p APPLICATION_NAME="tf-{{item.0}}-build-job-{{PYTH_VERSION | replace('.', '')}}" \
+        -p BUILDER_IMAGESTREAM="tf-{{item.0}}-build-image-{{PYTH_VERSION | replace('.', '')}}:1" \
+        -p NB_PYTHON_VER="{{ PYTH_VERSION }}" \
+        -p CUSTOM_BUILD="bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package" \
+        -p GIT_TOKEN="{{ GIT_TOKEN }}" \
+        -p PAGURE_SSH_PRIVATE_KEY="{{ PAGURE_SSH_PRIVATE_KEY }}" \ 
+        -p USE_BOTH=1
+      ignore_errors: true
+      with_together:
+        - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+        - "{{ job_exists.results }}"
+      when: job_exists is failed and item.1.stdout == ""
