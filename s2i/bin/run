@@ -449,6 +449,9 @@ else
 							cd tensorflow
 							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
 						elif [[ "$USE_BOTH" == "1" ]]; then
+							ls -l /home/default/pagure
+							cp /home/default/pagure/id_rsa  $HOME/.ssh/
+							chmod 600 $HOME/.ssh/id_rsa
 							git clone $PAGURE_COMMIT_REPO
 							cd tensorflow
 							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"

@@ -5,13 +5,16 @@ FILES="$3"
 WHFLL="$4"
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# echo "=============================="
-# echo "TENSORFLOW_BUILD_DIR_NAME="$TENSORFLOW_BUILD_DIR_NAME
-# echo "NOTES="$GIT_COMMIT_MSG
-# echo "FILES="$FILES
-# echo "BRANCH="$BRANCH
-# echo "=============================="
+echo "=============================="
+echo "TENSORFLOW_BUILD_DIR_NAME="$TENSORFLOW_BUILD_DIR_NAME
+echo "NOTES="$GIT_COMMIT_MSG
+echo "FILES="$FILES
+echo "BRANCH="$BRANCH
+echo "=============================="
 
+## TODO remove the HARDCODING
+cat $HOME/.ssh/known_hosts
+if [ ! -n "$(grep "^pagure.io " $HOME/.ssh/known_hosts)" ]; then echo "pagure doesnt exists" && ssh-keyscan pagure.io >> /home/$NB_USER/.ssh/known_hosts; fi;
 
 # Config: Script commit files on behalf of
 git config --local user.name "Red Hat's AICoE"
@@ -20,9 +23,15 @@ git config --local user.email "goern+aicoe@redhat.com"
 
 CHECK_LOCAL_AND_UPSTREAM(){
 	UPSTREAM="origin/$BRANCH"
-	LOCAL=$(git rev-parse @)
+	LOCAL=$(git rev-parse HEAD)
 	REMOTE=$(git rev-parse "$UPSTREAM")
-	BASE=$(git merge-base @ "$UPSTREAM")
+	BASE=$(git merge-base HEAD "$UPSTREAM")
+	echo "=============================="
+	echo "UPSTREAM="$UPSTREAM
+	echo "LOCAL="$LOCAL
+	echo "REMOTE="$REMOTE
+	echo "BASE="$BASE
+	echo "=============================="
 
 	if [ $LOCAL = $REMOTE ]; then
 		echo "Up-to-date"
@@ -50,10 +59,13 @@ PUSH_DATA(){
 		echo "FILE="$f
 		cp $f $TENSORFLOW_BUILD_DIR_NAME/
 	done
+	git status
 	CHECK_LOCAL_AND_UPSTREAM
 	UPDATE_INDEX_HTML
 	git add $TENSORFLOW_BUILD_DIR_NAME && git add index.html
+	git status
 	git commit -m "$GIT_COMMIT_MSG"
+	git status
 	git push origin $BRANCH || {
 		git pull --rebase origin $BRANCH
 		git push origin $BRANCH

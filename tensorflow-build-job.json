@@ -183,7 +183,7 @@
                                 "volumeMounts": [
                                     {
                                       "name": "ssh-config",
-                                      "mountPath": "/home/default/.ssh"
+                                      "mountPath": "/home/default/pagure"
                                     }
                                 ],
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
