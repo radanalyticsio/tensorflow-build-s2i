@@ -29,6 +29,7 @@ Build and install from source is fraught with errors due to `gcc` compatability 
 
 The templates and Dockerfiles available here provide a flexible approach to create wheel files for different combinations of OS, `python` version, `bazel` version etc by specifying them as PARAMS(`--param=`) in the templates. 
 The wheel files created from these templates are available at [AICoE/wheels](https://github.com/AICoE/wheels/releases).
+And the instructions to use with pipfile are given here [AICoE's TensorFlow Artifacts](https://index-aicoe.a3c1.starter-us-west-1.openshiftapps.com/).
 
 ##### For GPU: TODO
 GPU is not yet supported.
