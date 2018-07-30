@@ -53,33 +53,46 @@ UPDATE_INDEX_HTML(){
 	sed -i "/<section>/a $TAG" index.html
 }
 
-
-PUSH_DATA(){
+COPY_FILES(){
 	for f in $FILES;do
 		echo "FILE="$f
-		cp $f $TENSORFLOW_BUILD_DIR_NAME/
+		if [ -f "$f" == "../build_info.yaml" ]; then
+			cp $f $TENSORFLOW_BUILD_DIR_NAME/build_info-${TENSORFLOW_BUILD_DIR_NAME::-4}.yaml
+		else
+			cp $f $TENSORFLOW_BUILD_DIR_NAME/
+		fi
 	done
+}
+
+PUSH_DATA(){
 	git status
 	echo "=============================="
 	CHECK_LOCAL_AND_UPSTREAM
-	UPDATE_INDEX_HTML
-	git add $TENSORFLOW_BUILD_DIR_NAME && git add index.html
+	git add $TENSORFLOW_BUILD_DIR_NAME
 	git status
 	echo "=============================="
 	git commit -m "$GIT_COMMIT_MSG"
 	git status
 	echo "=============================="
-	git push origin $BRANCH || {
+	until git push origin $BRANCH; do
 		git pull --rebase origin $BRANCH
-		git push origin $BRANCH
-	}
+	done
 }
 
-# NOTE: Logging will be intergated.
 if [ ! -d "$TENSORFLOW_BUILD_DIR_NAME" ]; then
 	mkdir -p "$TENSORFLOW_BUILD_DIR_NAME"
+	COPY_FILES
+	UPDATE_INDEX_HTML
+	git add index.html
 	PUSH_DATA
-else
+elif [ -d "$TENSORFLOW_BUILD_DIR_NAME" && ! -f "$TENSORFLOW_BUILD_DIR_NAME/$WHFLL" ]
+	echo 'OS version exists - new python version'
+	COPY_FILES
+	UPDATE_INDEX_HTML
+	git add index.html
+	PUSH_DATA
+else 
 	echo 'OS version exists - adding updated files'
+	COPY_FILES
 	PUSH_DATA
 fi
