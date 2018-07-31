@@ -439,7 +439,7 @@
         {
             "name": "GIT_RELEASE_REPO",
             "description": "GIT_RELEASE_REPO",
-            "value": "https://github.com/AICoE/wheels.git",
+            "value": "https://github.com/AICoE/tensorflow-wheels.git",
             "required": true
         },
         {
