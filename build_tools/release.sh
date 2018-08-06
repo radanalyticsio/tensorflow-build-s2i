@@ -11,6 +11,13 @@ RELEASE_NAME=$2
 NOTES=$3
 GIT_TOKEN=$4
 FILES=$5
+
+[[  -z "$GIT_TAG" ]] && echo "GIT_TAG value needed" && exit 1
+[[  -z "$RELEASE_NAME" ]] && echo "RELEASE_NAME value needed" && exit 1
+[[  -z "$NOTES" ]] && echo "NOTES value needed" && exit 1
+[[  -z "$GIT_TOKEN" ]] && echo "GIT_TOKEN value needed" && exit 1
+[[  -z "$FILES" ]] && echo "FILES value needed" && exit 1
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 GITHUB_REPO=$(git config --get remote.origin.url | sed 's/.*:\/\/github.com\///;s/.git$//')
 
@@ -36,6 +43,12 @@ get_latest_release() {
 }
 
 
+check_oauth_scope() {
+  # check to see if X-OAuth-Scopes has repo
+  curl --silent -i -H "Authorization: token $GIT_TOKEN" https://api.github.com/rate_limit | 
+    grep "X-OAuth-Scopes:" | tr -d ":" | awk -v N=$2 '{print $2}'                                   # Pluck JSON value
+}
+
 echo "=============================="
 echo "GIT_TAG="$GIT_TAG
 echo "RELEASE_NAME="$RELEASE_NAME
@@ -45,7 +58,13 @@ echo "BRANCH="$BRANCH
 echo "GITHUB_REPO="$GITHUB_REPO
 echo "POST_DATA=$(POST_DATA)"
 echo "LATEST_REL_TAG=$(get_latest_release)"
-curl -I -H "Authorization: token $GIT_TOKEN" https://api.github.com/rate_limit
+echo "OUATH_SCOPE=$(check_oauth_scope)"
+OUATH_SCOPE=$(check_oauth_scope)
+[[  -z "$OUATH_SCOPE" ]] && echo "OUATH_SCOPE value should be repo" && exit 1
+[[ "$OUATH_SCOPE" != *"repo"* ]] && echo "## This command will ONLY work if the oauth token has scope of repo.
+## You can generate Personal API access token at https://github.com/settings/tokens. Minimal token scope is repo
+" && exit 1
+#curl -I -H "Authorization: token $GIT_TOKEN" https://api.github.com/rate_limit
 echo "=============================="
 
 
