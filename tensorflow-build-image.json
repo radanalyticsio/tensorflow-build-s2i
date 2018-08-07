@@ -86,12 +86,12 @@
                 },
                 "resources": {
                     "limits": {
-                        "cpu": "6",
+                        "cpu": "4",
                         "memory": "8Gi"
                     },
                     "requests": {
-                        "cpu": "3",
-                        "memory": "4Gi"
+                        "cpu": "4",
+                        "memory": "8Gi"
                     }
                 }
             }

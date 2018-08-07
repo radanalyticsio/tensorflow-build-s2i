@@ -458,11 +458,11 @@ else
 							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
 							cd ..
 							git clone $GIT_RELEASE_REPO
-							cd wheels
+							cd tensorflow-wheels
 							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
 						else
 							git clone $GIT_RELEASE_REPO
-							cd wheels
+							cd tensorflow-wheels
 							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
 						fi
 					} | tee -a test_wheel.log 

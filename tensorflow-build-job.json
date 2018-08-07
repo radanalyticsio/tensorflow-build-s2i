@@ -189,11 +189,11 @@
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "resources": {
                                     "limits": {
-                                        "cpu": "8",
-                                        "memory": "10Gi"
+                                        "cpu": "4",
+                                        "memory": "8Gi"
                                     },
                                     "requests": {
-                                        "cpu": "6",
+                                        "cpu": "4",
                                         "memory": "8Gi"
                                     }
                                 }
