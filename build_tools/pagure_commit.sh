@@ -85,7 +85,7 @@ if [ ! -d "$TENSORFLOW_BUILD_DIR_NAME" ]; then
 	UPDATE_INDEX_HTML
 	git add index.html
 	PUSH_DATA
-elif [ -d "$TENSORFLOW_BUILD_DIR_NAME" && ! -f "$TENSORFLOW_BUILD_DIR_NAME/$WHFLL" ]
+elif [ -d "$TENSORFLOW_BUILD_DIR_NAME" && ! -f "$TENSORFLOW_BUILD_DIR_NAME/$WHFLL" ]; then
 	echo 'OS version exists - new python version'
 	COPY_FILES
 	UPDATE_INDEX_HTML
