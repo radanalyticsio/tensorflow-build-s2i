@@ -54,9 +54,9 @@ echo "NB_PYTHON_VER = "$NB_PYTHON_VER
 echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
 echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
 echo "GIT_RELEASE_REPO = "$GIT_RELEASE_REPO
-echo "PAGURE_COMMIT_REPO = "$PAGURE_COMMIT_REPO
-echo "USE_PAGURE_COMMIT ="$USE_PAGURE_COMMIT
-echo "USE_BOTH ="$USE_BOTH
+# echo "PAGURE_COMMIT_REPO = "$PAGURE_COMMIT_REPO
+# echo "USE_PAGURE_COMMIT ="$USE_PAGURE_COMMIT
+# echo "USE_BOTH ="$USE_BOTH
 echo "============================================"
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
@@ -444,27 +444,30 @@ else
 						GIT_TOKEN="${GIT_TOKEN}"
 						FILES="../${whlff} ../build_info.yaml"
 						ls -l
-						if [[ "$USE_PAGURE_COMMIT" == "1" ]]; then
-							git clone $PAGURE_COMMIT_REPO
-							cd tensorflow
-							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
-						elif [[ "$USE_BOTH" == "1" ]]; then
-							ls -l /home/default/pagure
-							ls -l /home/default/.ssh
-							cp /home/default/pagure/id_rsa  $HOME/.ssh/
-							chmod 600 $HOME/.ssh/id_rsa
-							git clone $PAGURE_COMMIT_REPO
-							cd tensorflow
-							source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
-							cd ..
-							git clone $GIT_RELEASE_REPO
-							cd tensorflow-wheels
-							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-						else
-							git clone $GIT_RELEASE_REPO
-							cd tensorflow-wheels
-							source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-						fi
+						git clone $GIT_RELEASE_REPO
+						cd tensorflow-wheels
+						source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+						# if [[ "$USE_PAGURE_COMMIT" == "1" ]]; then
+						# 	git clone $PAGURE_COMMIT_REPO
+						# 	cd tensorflow
+						# 	source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
+						# elif [[ "$USE_BOTH" == "1" ]]; then
+						# 	ls -l /home/default/pagure
+						# 	ls -l /home/default/.ssh
+						# 	cp /home/default/pagure/id_rsa  $HOME/.ssh/
+						# 	chmod 600 $HOME/.ssh/id_rsa
+						# 	git clone $PAGURE_COMMIT_REPO
+						# 	cd tensorflow
+						# 	source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
+						# 	cd ..
+						# 	git clone $GIT_RELEASE_REPO
+						# 	cd tensorflow-wheels
+						# 	source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+						# else
+						# 	git clone $GIT_RELEASE_REPO
+						# 	cd tensorflow-wheels
+						# 	source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
+						# fi
 					} | tee -a test_wheel.log 
 				fi
 			fi

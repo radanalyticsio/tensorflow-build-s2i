@@ -157,35 +157,12 @@
                                         "value": "${GIT_RELEASE_REPO}"
                                     },
                                     {
-                                        "name": "PAGURE_COMMIT_REPO",
-                                        "value": "${PAGURE_COMMIT_REPO}"
-                                    },
-                                    {
-                                        "name": "USE_PAGURE_COMMIT",
-                                        "value": "${USE_PAGURE_COMMIT}"
-                                    },
-                                    {
-                                        "name": "USE_BOTH",
-                                        "value": "${USE_BOTH}"
-                                    },
-                                    {
                                         "name": "GIT_TOKEN",
-                                        "valueFrom": {
-                                          "secretKeyRef": {
-                                            "key": "git-token",
-                                            "name": "${APPLICATION_NAME}-secret"
-                                          }
-                                        }
+                                        "value": "${GIT_TOKEN}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${BUILDER_IMAGESTREAM}",
-                                "volumeMounts": [
-                                    {
-                                      "name": "ssh-config",
-                                      "mountPath": "/home/default/pagure"
-                                    }
-                                ],
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "resources": {
                                     "limits": {
@@ -199,41 +176,10 @@
                                 }
                             }
                         ],
-                        "volumes": [
-                            {
-                              "name": "ssh-config",
-                              "secret": {
-                                "secretName": "${APPLICATION_NAME}-secret",
-                                "items": [
-                                  {
-                                    "key": "ssh-privatekey",
-                                    "path": "id_rsa",
-                                    "mode": 384
-                                  }
-                                ]
-                              }
-                            }
-                        ],
 						"restartPolicy": "Never"
                     }
                 }
             }
-        },
-        {
-          "apiVersion": "v1",
-          "kind": "Secret",
-          "metadata": {
-            "name": "${APPLICATION_NAME}-secret",
-            "labels": {
-                "appTypes": "tensorflow-build-job",
-                "appName": "${APPLICATION_NAME}"
-            }
-          },
-          "type": "kubernetes.io/ssh-auth",
-          "stringData": {
-            "ssh-privatekey": "${PAGURE_SSH_PRIVATE_KEY}",
-            "git-token": "${GIT_TOKEN}"
-          }
         }
     ],
     "parameters": [
@@ -441,30 +387,6 @@
             "description": "GIT_RELEASE_REPO",
             "value": "https://github.com/AICoE/tensorflow-wheels.git",
             "required": true
-        },
-        {
-            "name": "PAGURE_COMMIT_REPO",
-            "description": "PAGURE_COMMIT_REPO",
-            "value": "ssh://git@pagure.io/tensorflow.git",
-            "required": true
-        },
-        {
-            "name": "PAGURE_SSH_PRIVATE_KEY",
-            "description": "SSH private key to authenticate the public key set in GitHub.",
-            "required": false,
-            "value": ""
-        },
-        {
-            "name": "USE_PAGURE_COMMIT",
-            "description": "To Push wheel files to pagure tensorflow repository",
-            "required": true,
-            "value": "0"
-        },
-        {
-            "name": "USE_BOTH",
-            "description": "Push wheel files to Pagure tensorflow repository and Release on AICoE Wheels repository",
-            "required": true,
-            "value": "0"
         }
     ]
 }
