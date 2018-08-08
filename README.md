@@ -132,7 +132,6 @@ oc new-app --template=tensorflow-build-job
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
 --param=BAZEL_VERSION=0.11.0 \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO  \
---param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=GIT_TOKEN=$GIT_TOKEN
 ```
 NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2.
@@ -152,7 +151,6 @@ oc new-app --template=tensorflow-build-dc
 --param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
 --param=GIT_TOKEN=$GIT_TOKEN \
---param=PAGURE_SSH_PRIVATE_KEY=$PAGURE_SSH_PRIVATE_KEY \
 --param=TEST_LOOP=y
 
 ```
