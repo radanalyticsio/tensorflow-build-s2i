@@ -158,7 +158,7 @@
                                     },
                                     {
                                         "name": "GIT_TOKEN",
-                                        "value": "${GIT_TOKEN}"
+                                        "value": "${SESHETA_GITHUB_ACCESS_TOKEN}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -377,8 +377,8 @@
             "required": true
         },
         {
-            "name": "GIT_TOKEN",
-            "description": "GIT_TOKEN value is required if you release to github",
+            "name": "SESHETA_GITHUB_ACCESS_TOKEN",
+            "description": "SESHETA_GITHUB_ACCESS_TOKEN value is required if you release to github",
             "value": "",
             "required": true
         },
