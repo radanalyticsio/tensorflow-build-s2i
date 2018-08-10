@@ -67,7 +67,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
-    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python-devel python27-python-devel && scl enable python27 bash ; fi \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y tkinter scl-utils python27 python-devel python27-python-devel && scl enable python27 bash ; fi \
     && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash  ; fi \
     && if [ "$PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils rh-python36 rh-python36-python-pip rh-python36-scldevel && scl enable rh-python36 bash  ; fi \
     && echo "-----IMAGE_TEST--------" \
@@ -187,7 +187,7 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
-ADD test/test_tensorflow /test_tensorflow
+ADD test/ /workspace/
 
 # NO CLEANUP
 # Donot add below commands

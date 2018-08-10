@@ -43,11 +43,19 @@
                                     {
                                         "name": "NEW_WHEEL_FILE",
                                         "value": "${NEW_WHEEL_FILE}"
+                                    },
+                                    {
+                                        "name": "HOST_ON_HTTP_SERVER",
+                                        "value": "${HOST_ON_HTTP_SERVER}"
+                                    },
+                                    {
+                                        "name": "TF_VERSION",
+                                        "value": "${TF_VERSION}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${BUILDER_IMAGESTREAM}",
-                                "command": ["/entrypoint", "/test_tensorflow"],
+                                "command": ["/entrypoint", "/workspace/test_tensorflow"],
                                 "resources": {
                                     "limits": {
                                         "cpu": "8",
@@ -84,7 +92,7 @@
             "name": "TEST_LOOP",
             "description": " while loop",
             "value": "n",
-            "required": false
+            "required": true
         },
         {
             "name": "CUSTOM_INSTALL",
@@ -96,6 +104,18 @@
             "name": "NEW_WHEEL_FILE",
             "description": " new wheel file URL",
             "value": "",
+            "required": true
+        },
+        {
+            "name": "TF_VERSION",
+            "description": " TF_VERSION",
+            "value": "1.9.0",
+            "required": true
+        },
+        {
+            "name": "HOST_ON_HTTP_SERVER",
+            "description": " HOST_ON_HTTP_SERVER",
+            "value": "n",
             "required": true
         }
     ]

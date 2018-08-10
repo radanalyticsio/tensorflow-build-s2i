@@ -9,6 +9,7 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 
 
 echo "TEST_LOOP=$TEST_LOOP"
+echo "TF_VERSION=$TF_VERSION"
 echo "NB_PYTHON_VER=$NB_PYTHON_VER"
 echo "CUSTOM_INSTALL=$CUSTOM_INSTALL"
 echo "NEW_WHEEL_FILE=$NEW_WHEEL_FILE"
@@ -42,6 +43,20 @@ ls -l /usr/local/cuda/lib64/stubs/libcuda.so.1
 echo "===================================="
 
 
+pip install matplotlib --user
+pip install tensorflow==$TF_VERSION --user
+pip show tensorflow
+cd /workspace
+python matmul_bench.py --device=cpu --out=times-google.csv
+pip uninstall tensorflow -y
+echo "===================================="
+
+
+
+
+
+
+
 if [[ $CUSTOM_INSTALL = "y" ]]
 then
 	(pip install $NEW_WHEEL_FILE --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
@@ -55,6 +70,10 @@ then
 		echo "####################################"
 		echo "      CUSTOM_INSTALL  SUCCESS		  "
 		echo "####################################"
+		pip show tensorflow
+		cd /workspace
+		python matmul_bench.py --device=cpu --out=times-custom.csv
+		python graph.py times
 	fi
 fi
 
@@ -124,6 +143,17 @@ then
 		echo "Press [CTRL+C] to stop.."
 		sleep 1
 	done
+fi
+
+### enable HOST_ON_HTTP_SERVER only which deployment config and NOT with Jobs. 
+if [[ $HOST_ON_HTTP_SERVER = "y" ]]
+then
+	echo "Starting httpserver to host the binary...\n"
+    cd /
+	if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
+		python -m SimpleHTTPServer $PORT ; 
+	else python -m http.server $PORT ; 
+	fi
 fi
 
 echo "end"
