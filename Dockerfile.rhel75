@@ -60,11 +60,7 @@ ENV PATH /usr/local/bin:$PATH:/home/default/.local/bin
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
 
-ADD entrypoint /entrypoint
-ADD build_tools /build_tools
-
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-    && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
     && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y tkinter scl-utils python27 python-devel python27-python-devel && scl enable python27 bash ; fi \
@@ -187,7 +183,11 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
-ADD test/ /workspace/
+ADD test/ /tmp/test/
+ADD entrypoint /entrypoint
+RUN chmod +x /entrypoint
+ADD build_tools /build_tools
+
 
 # NO CLEANUP
 # Donot add below commands

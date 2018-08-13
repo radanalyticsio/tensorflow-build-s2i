@@ -125,12 +125,8 @@ ENV PATH=/home/$NB_USER/.local/bin:/usr/local/bin:$PATH
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
 
-ADD entrypoint /entrypoint
-ADD build_tools /build_tools
-
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 #	&& grep -vIr "\x00" -- /build_tools/ \
-    && chmod +x /entrypoint \
     && yum install -y centos-release-scl-rh \
     && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python-devel python27-python-devel && scl enable python27 bash ; fi \
     && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash && export PATH=/opt/rh/rh-python35/root/usr/bin:$PATH; fi \
@@ -278,7 +274,10 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
-ADD test/test_tensorflow /test_tensorflow
+ADD test/ /tmp/test/
+ADD entrypoint /entrypoint
+RUN chmod +x /entrypoint
+ADD build_tools /build_tools
 
 # NO CLEANUP
 # Donot add below commands

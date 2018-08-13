@@ -55,7 +55,7 @@
                                 ],
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${BUILDER_IMAGESTREAM}",
-                                "command": ["/entrypoint", "/workspace/test_tensorflow"],
+                                "command": ["/entrypoint", "/tmp/test/test_tensorflow"],
                                 "resources": {
                                     "limits": {
                                         "cpu": "8",

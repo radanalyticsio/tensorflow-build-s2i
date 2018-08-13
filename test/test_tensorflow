@@ -46,7 +46,7 @@ echo "===================================="
 pip install matplotlib --user
 pip install tensorflow==$TF_VERSION --user
 pip show tensorflow
-cd /workspace
+cd /tmp/test
 python matmul_bench.py --device=cpu --out=times-google.csv
 pip uninstall tensorflow -y
 echo "===================================="
@@ -71,7 +71,7 @@ then
 		echo "      CUSTOM_INSTALL  SUCCESS		  "
 		echo "####################################"
 		pip show tensorflow
-		cd /workspace
+		cd /tmp/test
 		python matmul_bench.py --device=cpu --out=times-custom.csv
 		python graph.py times
 	fi
@@ -149,7 +149,7 @@ fi
 if [[ $HOST_ON_HTTP_SERVER = "y" ]]
 then
 	echo "Starting httpserver to host the binary...\n"
-    cd /
+    cd /tmp/test
 	if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
 		python -m SimpleHTTPServer $PORT ; 
 	else python -m http.server $PORT ; 
