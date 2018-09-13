@@ -450,7 +450,7 @@
             "name": "TEST_LOOP",
             "description": "USE ONLY with DeploymentConfig.(y or n).If y then start a while loop.If y then http won't start.",
             "value": "y",
-            "required": false
+            "required": true
         },
         {
             "name": "HOST_ON_HTTP_SERVER",
@@ -479,13 +479,13 @@
         {
             "name": "BAZEL_VERSION",
             "description": "BAZEL_VERSION",
-            "value": "0.11.0",
+            "value": "0.15.0",
             "required": true
         },
         {
             "name": "TF_GIT_BRANCH",
             "description": "TF_GIT_BRANCH",
-            "value": "r1.9",
+            "value": "r1.10",
             "required": true
         },
         {

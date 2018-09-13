@@ -14,7 +14,7 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.11.0
+ARG BAZEL_VERSION=0.15.0
 ARG NB_PYTHON_VER=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
 ENV NB_PYTHON_VER=$NB_PYTHON_VER

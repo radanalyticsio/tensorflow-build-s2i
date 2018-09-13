@@ -14,7 +14,7 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
 
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.11.0
+ARG BAZEL_VERSION=0.15.0
 ARG NB_PYTHON_VER=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
 ENV PYTHON_VER=$NB_PYTHON_VER
@@ -36,7 +36,7 @@ ENV TINI_VERSION=v0.16.1
 ENV PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VER/site-packages
 ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
-###ENV BAZEL_VERSION 0.11.0
+###ENV BAZEL_VERSION 0.15.0
 ################################################
 ## Tensorflow ./configure options for Bazel
 ################################################

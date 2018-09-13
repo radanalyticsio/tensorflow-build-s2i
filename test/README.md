@@ -38,4 +38,4 @@ oc delete  all -l appName=tf-rhel75-build-image-${PYTH_VERSION//.}
 oc delete  all -l appName=tf-rhel75-test-job-${PYTH_VERSION//.}
 
 ```
-
+Credits: the matrixmul code is used from https://blog.perfinion.com/2018/07/tensorflow-cpu-supports-instructions/

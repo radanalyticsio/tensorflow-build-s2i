@@ -106,7 +106,7 @@ The above command creates a tensorflow builder image `APPLICATION_NAME:VERSION` 
 The values for `S2I_IMAGE` are :
 - Fedora26- `registry.fedoraproject.org/f26/s2i-core`
 - Fedora27- `registry.fedoraproject.org/f27/s2i-core`
-- Fedora27- `registry.fedoraproject.org/f28/s2i-core`
+- Fedora28- `registry.fedoraproject.org/f28/s2i-core`
 - RHEL7.5- `registry.access.redhat.com/rhscl/s2i-core-rhel7`
 - Centos7- `openshift/base-centos7`
 
@@ -130,7 +130,7 @@ oc new-app --template=tensorflow-build-job
 --param=APPLICATION_NAME=tf-rhel75-build-job-${PYTH_VERSION//.} \
 --param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
---param=BAZEL_VERSION=0.11.0 \
+--param=BAZEL_VERSION=0.15.0 \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO  \
 --param=GIT_TOKEN=$GIT_TOKEN
 ```
