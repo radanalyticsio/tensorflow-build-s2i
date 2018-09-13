@@ -142,6 +142,10 @@
                                         "value": "${TF_NEED_S3}"
                                     },
                                     {
+                                        "name": "TF_NEED_AWS",
+                                        "value": "${TF_NEED_AWS}"
+                                    },
+                                    {
                                         "name": "TF_NEED_KAFKA",
                                         "value": "${TF_NEED_KAFKA}"
                                     },
@@ -413,6 +417,12 @@
         {
             "name": "TF_NEED_KAFKA",
             "description": "TF_NEED_KAFKA",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_AWS",
+            "description": "TF_NEED_AWS",
             "value": "0",
             "required": true
         },
