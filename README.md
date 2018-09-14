@@ -81,7 +81,6 @@ PYTH_VERSION=3.6
 # git token and repo
 export GIT_TOKEN=
 export GIT_RELEASE_REPO=
-export PAGURE_SSH_PRIVATE_KEY="$(cat dummy_pagure_ssh_key)"
 ```
 
 #### 1. Create the templates
@@ -93,13 +92,13 @@ oc create -f tensorflow-build-dc.json
 
 #### 2. Create Tensorflow build image
 ```
-oc new-app --template=tensorflow-build-image  
+oc new-app --template=tensorflow-build-image \
 --param=APPLICATION_NAME=tf-rhel75-build-image-${PYTH_VERSION//.} \
 --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7  \
 --param=DOCKER_FILE_PATH=Dockerfile.rhel75  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=VERSION=2 \
---param=BAZEL_VERSION=0.11.0
+--param=BAZEL_VERSION=0.15.0
 ```
 The above command creates a tensorflow builder image `APPLICATION_NAME:VERSION` for specific OS.
 
@@ -126,13 +125,13 @@ And then deploy from UI with appropriate values.
 #### 3. Create Tensorflow wheel for CPU using the build image
 
 ```
-oc new-app --template=tensorflow-build-job  
+oc new-app --template=tensorflow-build-job  \
 --param=APPLICATION_NAME=tf-rhel75-build-job-${PYTH_VERSION//.} \
 --param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
 --param=BAZEL_VERSION=0.15.0 \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO  \
---param=GIT_TOKEN=$GIT_TOKEN
+--param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN
 ```
 NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2.
 
@@ -146,13 +145,11 @@ You can generate Personal API access token at https://github.com/settings/tokens
 
 ### To create a DEV environment for debugging build issues :
 ```
-oc new-app --template=tensorflow-build-dc  
+oc new-app --template=tensorflow-build-dc  \
 --param=APPLICATION_NAME=tf-rhel75-build-dc-${PYTH_VERSION//.} \
 --param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
 --param=NB_PYTHON_VER=$PYTH_VERSION  \
---param=GIT_TOKEN=$GIT_TOKEN \
 --param=TEST_LOOP=y
-
 ```
 NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2. 
 

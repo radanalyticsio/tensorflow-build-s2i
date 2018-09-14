@@ -5,7 +5,6 @@
 PYTH_VERSION=3.6
 export GIT_TOKEN=
 export GIT_RELEASE_REPO=
-export PAGURE_SSH_PRIVATE_KEY="$(cat dummy_pagure_ssh_key)"
 ```
 
 #### Create the templates

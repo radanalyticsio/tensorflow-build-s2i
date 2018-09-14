@@ -177,6 +177,7 @@ CPUINFO_FLAGS_TENSORFLOW=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '
 
 CPU_FAMILY=$(lscpu |grep "CPU family" | awk '{ print $3 }')
 CPU_MODEL=$(lscpu |grep "Model:" | awk '{ print $2 }')
+CORES=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
 
 # Print info
 TF_BUILD_INFO="{
@@ -185,7 +186,8 @@ TF_BUILD_INFO="{
 \"OS_VER\": \""${OS_VER}"\", 
 \"GLIBC_VER\": \""${GLIBC_VER}"\", 
 \"PIP_VER\": \""${PIP_VER}"\", 
-\"PROTOC_VER\": \""${PROTOC_VER}"\", 
+\"PROTOC_VER\": \""${PROTOC_VER}"\",
+\"CORES\": \""${CORES}"\",
 \"GCC_VER\": \""${GCC_VER}"\", 
 \"OS\": \""${OS}"\", 
 \"kernel\": \""${KERNEL}"\", 
