@@ -43,12 +43,12 @@ ls -l /usr/local/cuda/lib64/stubs/libcuda.so.1
 echo "===================================="
 
 
-pip install matplotlib --user
-pip install tensorflow==$TF_VERSION --user
-pip show tensorflow
-cd /tmp/test
-python matmul_bench.py --device=cpu --out=times-google.csv
-pip uninstall tensorflow -y
+# pip install matplotlib --user
+# pip install tensorflow==$TF_VERSION --user
+# pip show tensorflow
+# cd /tmp/test
+# python matmul_bench.py --device=cpu --out=times-google.csv
+# pip uninstall tensorflow -y
 echo "===================================="
 
 
@@ -71,9 +71,9 @@ then
 		echo "      CUSTOM_INSTALL  SUCCESS		  "
 		echo "####################################"
 		pip show tensorflow
-		cd /tmp/test
-		python matmul_bench.py --device=cpu --out=times-custom.csv
-		python graph.py times
+		# cd /tmp/test
+		# python matmul_bench.py --device=cpu --out=times-custom.csv
+		# python graph.py times
 	fi
 fi
 

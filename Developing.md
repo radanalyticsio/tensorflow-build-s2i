@@ -32,7 +32,7 @@ oc new-app --template=tensorflow-build-job  \
 --param=BUILDER_IMAGESTREAM=tf-fedora27-build-image-${PYTH_VERSION//.}:1  \
 --param=NB_PYTHON_VER=$PYTH_VERSION \
 --param=CUSTOM_BUILD="bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
---param=GIT_TOKEN=$GIT_TOKEN \
+--param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO \
 --param=BAZEL_VERSION=0.15.0
 ```
@@ -57,3 +57,26 @@ oc delete  all -l appName=tf-fedora27-build-dc-${PYTH_VERSION//.}
 oc delete  all -l appName=tf-fedora27-build-job-${PYTH_VERSION//.}
 ```
 
+### GPU Usage example :
+
+#### Create the Build Image for GPU rhel7
+```
+oc new-app --template=tensorflow-build-image  \
+--param=APPLICATION_NAME=tf-rhel75gpu-build-image-${PYTH_VERSION//.}  \
+--param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7  \
+--param=DOCKER_FILE_PATH=Dockerfile.rhel75gpu  \
+--param=NB_PYTHON_VER=$PYTH_VERSION  \
+--param=VERSION=1  --param=BAZEL_VERSION=0.15.0
+```
+
+#### Create Tensorflow wheel for GPU using the build image
+```
+oc new-app --template=tensorflow-build-job  \
+--param=APPLICATION_NAME=tf-rhel75gpu-build-job-${PYTH_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75gpu-build-image-${PYTH_VERSION//.}:1  \
+--param=NB_PYTHON_VER=$PYTH_VERSION   \
+--param=CUSTOM_BUILD="bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  \
+--param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN  \
+--param=TF_NEED_CUDA=1  \
+--param=BAZEL_VERSION=0.15.0
+```
