@@ -177,7 +177,10 @@ CPUINFO_FLAGS_TENSORFLOW=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '
 
 CPU_FAMILY=$(lscpu |grep "CPU family" | awk '{ print $3 }')
 CPU_MODEL=$(lscpu |grep "Model:" | awk '{ print $2 }')
-CORES=$(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l)
+#https://access.redhat.com/solutions/224883
+LOGICAL_CPUS=$(grep processor /proc/cpuinfo | wc -l)
+CORES_PER_PCPU=$(grep cpu.cores /proc/cpuinfo | sort -u | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]')
+PHYSICAL_CPUS=$(grep physical.id /proc/cpuinfo | sort -u | wc -l)
 
 # Print info
 TF_BUILD_INFO="{
@@ -187,7 +190,9 @@ TF_BUILD_INFO="{
 \"GLIBC_VER\": \""${GLIBC_VER}"\", 
 \"PIP_VER\": \""${PIP_VER}"\", 
 \"PROTOC_VER\": \""${PROTOC_VER}"\",
-\"CORES\": \""${CORES}"\",
+\"LOGICAL_CPUS\": \""${LOGICAL_CPUS}"\", 
+\"CORES_PER_PCPU\": \""${CORES_PER_PCPU}"\", 
+\"PHYSICAL_CPUS\": \""${PHYSICAL_CPUS}"\", 
 \"GCC_VER\": \""${GCC_VER}"\", 
 \"OS\": \""${OS}"\", 
 \"kernel\": \""${KERNEL}"\", 
