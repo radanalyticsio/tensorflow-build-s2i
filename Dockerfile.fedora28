@@ -63,7 +63,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
     && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
     && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
-    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler kmod \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
@@ -71,7 +71,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && python$NB_PYTHON_VER get-pip.py \
     && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
     && dnf install -y which findutils x86info cpuid dmidecode procps \
-    && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
+    && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils elfutils-libelf-devel \
     && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
     && dnf install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
