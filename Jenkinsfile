@@ -1,7 +1,9 @@
-def operatingSystem = env.OPERATING_SYSTEM ?: "fedora26"
-def registry = env.REGISTRY ?: "registry.fedoraproject.org/f26/s2i-core"
+def operatingSystem = env.OPERATING_SYSTEM ?: "fedora28"
+def s2iImage = env.S2I_IMAGE ?: "registry.fedoraproject.org/f28/s2i-core"
 def pythonVersion = env.PYTHON_VERSION ?: "3.6"
 def pythonVersionNoDecimal = pythonVersion.replaceAll("[^a-zA-Z0-9]+","")
+def bazelVersion = env.BAZEL_VERSION ?: "0.15.0"
+def customBuild = env.CUSTOM_BUILD ?: "bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"
 
 def project = "tensorflow"
 
@@ -18,9 +20,10 @@ node {
             builderImageStream = openshift.process(
               tensorflowImageTemplate,
               "-p", "APPLICATION_NAME=tf-${operatingSystem}-build-image-${pythonVersionNoDecimal}",
-              "-p", "S2I_IMAGE=${registry}",
+              "-p", "S2I_IMAGE=${s2iImage}",
               "-p", "DOCKER_FILE_PATH=Dockerfile.${operatingSystem}",
-              "-p", "NB_PYTHON_VER=${pythonVersion}"
+              "-p", "NB_PYTHON_VER=${pythonVersion}",
+              "-p", "BAZEL_VERSION=${bazelVersion}"
             )
             def createdImageStream = openshift.create(builderImageStream)
             createdImageStream.describe()
@@ -34,6 +37,8 @@ node {
               "-p", "APPLICATION_NAME=tf-${operatingSystem}-build-job-${pythonVersionNoDecimal}",
               "-p", "BUILDER_IMAGESTREAM=tf-${operatingSystem}-build-image-${pythonVersionNoDecimal}",
               "-p", "NB_PYTHON_VER=${pythonVersion}",
+              "-p", "CUSTOM_BUILD=${customBuild}",
+              "-p", "BAZEL_VERSION=${bazelVersion}",
               "-p", "SESHETA_GITHUB_ACCESS_TOKEN=${env.GIT_TOKEN}"
             )
             def createdJob = openshift.create(buildJob)
