@@ -42,6 +42,7 @@
                     }
                 ],
                 "replicas": 1,
+                "serviceAccountName": "tensorflow-bot",
                 "selector": {
                     "deploymentconfig": "${APPLICATION_NAME}"
                 },
@@ -54,6 +55,7 @@
                         }
                     },
                     "spec": {
+                        "serviceAccountName": "tensorflow-bot",
                         "containers": [
                             {
                                 "env": [
@@ -204,6 +206,7 @@
                                 ],
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${BUILDER_IMAGESTREAM}",
+                                "serviceAccountName": "tensorflow-bot",
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "ports": [
                                     {
@@ -217,8 +220,8 @@
                                         "memory": "8Gi"
                                     },
                                     "requests": {
-                                        "cpu": "3",
-                                        "memory": "4Gi"
+                                        "cpu": "6",
+                                        "memory": "8Gi"
                                     }
                                 }
                             }
@@ -502,7 +505,7 @@
             "name": "SESHETA_GITHUB_ACCESS_TOKEN",
             "description": "SESHETA_GITHUB_ACCESS_TOKEN",
             "value": "",
-            "required": true
+            "required": false
         },
         {
             "name": "GIT_RELEASE_REPO",

@@ -147,6 +147,8 @@ fi
 #export PYTHON_LIB_PATH="$(echo /usr/lib/python${PYTHON_VERSION_OUTPUT:7:3}/site-packages)" \n\
 #export PYTHON_INCLUDE_PATH="$(echo /usr/include/python${PYTHON_VERSION_OUTPUT:7:3}*)" \n\
 
+#by defaults needs it at /usr/local/include/Python.h
+
 OSVER=$(. /etc/os-release;echo $ID)
 echo "OSVER = "$OSVER
 if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
@@ -300,13 +302,17 @@ if [ $TF_NEED_CUDA = "1" ]; then
 	#cd /workspace/serving/
 	#sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
 fi 
-
+#--local_resources 4096,4.0,1.0 --verbose_failures
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,3.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
+#bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+#bazel build --copt=-mavx --copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 
+
+#--copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma
 ### enable TEST_LOOP only which deployment config and NOT with Jobs. 
 if [[ $TEST_LOOP = "y" ]]
 then

@@ -33,6 +33,18 @@
                             {
                                 "env": [
                                     {
+                                        "name": "NVIDIA_VISIBLE_DEVICES",
+                                        "value": "all"
+                                    },
+                                    {
+                                        "name": "NVIDIA_DRIVER_CAPABILITIES",
+                                        "value": "compute,utility"
+                                    },
+                                    {
+                                        "name": "NVIDIA_REQUIRE_CUDA",
+                                        "value": "cuda>=8.0"
+                                    },
+                                    {
                                         "name": "TEST_LOOP",
                                         "value": "${TEST_LOOP}"
                                     },
@@ -56,14 +68,19 @@
                                 "name": "${APPLICATION_NAME}",
                                 "image": "${BUILDER_IMAGESTREAM}",
                                 "command": ["/entrypoint", "/tmp/test/test_tensorflow"],
+                                "securityContext":{
+                                    "privileged":true
+                                },
                                 "resources": {
                                     "limits": {
                                         "cpu": "8",
-                                        "memory": "10Gi"
+                                        "memory": "10Gi",
+                                        "nvidia.com/gpu": "1"
                                     },
                                     "requests": {
                                         "cpu": "6",
-                                        "memory": "8Gi"
+                                        "memory": "8Gi",
+                                        "nvidia.com/gpu": "1"
                                     }
                                 }
                             }
