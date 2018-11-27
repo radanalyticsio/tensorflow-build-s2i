@@ -11,6 +11,11 @@ set -o pipefail
 
 echo "run...."
 
+command_exists () { type "$1" &> /dev/null ; }
+file_exists () { test -f $1 ; }
+folder_exists () { test -d $1 ; }
+
+
 ### These ENVs should be set for configure.
 echo "TF_NEED_JEMALLOC = "$TF_NEED_JEMALLOC
 echo "TF_NEED_GCP = "$TF_NEED_GCP
@@ -54,9 +59,7 @@ echo "NB_PYTHON_VER = "$NB_PYTHON_VER
 echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
 echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
 echo "GIT_RELEASE_REPO = "$GIT_RELEASE_REPO
-# echo "PAGURE_COMMIT_REPO = "$PAGURE_COMMIT_REPO
-# echo "USE_PAGURE_COMMIT ="$USE_PAGURE_COMMIT
-# echo "USE_BOTH ="$USE_BOTH
+echo "HOME = "$HOME
 echo "============================================"
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
@@ -65,12 +68,10 @@ TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.
 
 
 
-
 #pip list 2>&1 | grep "YAML\|proto\|numpy"
-echo $HOME
-
 #echo "PYTHON_LIB_PATH=`$PYTHON_BIN_PATH -c 'import site; print(site.getsitepackages()[0])'`"
 #echo "PYTHONPATH="$PYTHONPATH
+#PYTHON_LIB_PATH="$($PYTHON_BIN_PATH -c 'import sys;for pth in sys.path: print pth)')"
 echo "which_python="`which python`
 echo "link_which_python="`ls -l $(which python) | awk '{print  $9 $10 $11}'`
 echo "link_bin_python="`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`
@@ -78,6 +79,9 @@ echo "which_pip="`which pip`
 echo "which_pip_version="`pip --version `
 echo "which_pip_site="`pip --version |awk '{print $4}' `
 echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
+pip list 2>&1 | grep "YAML\|proto\|numpy"
+
+
 
 # Naming the directory according to the naming convention
 OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
@@ -92,10 +96,9 @@ for varname in ${!TF_NEED_*}; do
 done
 TENSORFLOW_BUILD_DIR_NAME=$OSVER/${TF_GIT_BRANCH//r}/${FINAL_STR::-1}
 
-pip list 2>&1 | grep "YAML\|proto\|numpy"
-#PYTHON_LIB_PATH="$($PYTHON_BIN_PATH -c 'import sys;for pth in sys.path: print pth)')"
 
 
+# Dev Mode
 if [[ $TEST_LOOP = "y" ]]
 then
 	echo "####################################"
@@ -125,11 +128,9 @@ fi
 #https://www.softwarecollections.org/en/scls/rhscl/python27/
 #https://linuxize.com/post/how-to-install-python-3-on-centos-7/
 #
-#
 #python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
 #/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages
 #
-# 
 #export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
 
 
@@ -253,16 +254,14 @@ if [ "$NB_PYTHON_VER" = "3.6" ] ; then
 		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
 	fi
 fi
-
 echo | gcc -E -Wp,-v -
 echo "which_pip_version="`pip --version `
 pip list 2>&1 | grep "yaml\|proto\|numpy"
 
+
+
 ### Setup Bazel
 cd /workspace
-command_exists () { type "$1" &> /dev/null ; }
-file_exists () { test -f $1 ; }
-folder_exists () { test -d $1 ; }
 if command_exists bazel ; then 
 	echo "bazel command exists."; 
 else 
@@ -271,12 +270,18 @@ else
 	export PATH=$HOME/bin:$PATH && bazel && echo "PATH = "$PATH ; 
 fi
 
-### git clone tf
+
+
+### git clone tf and test
 cd /workspace
 echo "####################################"
 echo "      clone git repo.....       	  "
 echo "####################################"
 git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
+echo "####################################"
+echo "      test.....       	      "
+echo "####################################"
+bazel test -c opt -- //tensorflow/...
 echo "####################################"
 echo "      configure.....       	      "
 echo "####################################"
@@ -286,10 +291,10 @@ echo "####################################"
 export PATH=$HOME/bin:$PATH
 echo "PATH = "$PATH
 
+
+
 ###########################
-### 		TODO
-###########################
-### NO GPU support yet
+### TODO NO GPU support yet
 ###########################
 echo "TF_NEED_CUDA = "$TF_NEED_CUDA
 if [ $TF_NEED_CUDA = "1" ]; then 
@@ -310,9 +315,10 @@ fi
 #bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
 #bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build --copt=-mavx --copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
-
-
 #--copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma
+
+
+
 ### enable TEST_LOOP only which deployment config and NOT with Jobs. 
 if [[ $TEST_LOOP = "y" ]]
 then
@@ -329,8 +335,6 @@ fi
 
 
 # /workspace/bins is final location of binaries
-# /workspace/bins
-#`/workspace/bins
 echo "####################################"
 echo "      CUSTOM_BUILD.....       	  "
 echo "####################################"
@@ -341,6 +345,8 @@ ls -l
 source ./print_build_info.sh && echo "OK" || echo "Failed"
 mv build_info.yaml /workspace/bins/
 
+
+# TODO refator this out to script
 eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/build.log ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
     echo "####################################"
@@ -351,8 +357,7 @@ else
 	echo "      CUSTOM_BUILD  SUCCESS     	  "
 	echo "####################################"
 	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
-		## bazel build is success
-		## building the wheel file...
+		## bazel build is success so building the wheel file...
 		## cleanup old
 		rm -fr /workspace/bins/tensorflow*
 		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
@@ -453,27 +458,6 @@ else
 						git clone $GIT_RELEASE_REPO
 						cd tensorflow-wheels
 						source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-						# if [[ "$USE_PAGURE_COMMIT" == "1" ]]; then
-						# 	git clone $PAGURE_COMMIT_REPO
-						# 	cd tensorflow
-						# 	source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
-						# elif [[ "$USE_BOTH" == "1" ]]; then
-						# 	ls -l /home/default/pagure
-						# 	ls -l /home/default/.ssh
-						# 	cp /home/default/pagure/id_rsa  $HOME/.ssh/
-						# 	chmod 600 $HOME/.ssh/id_rsa
-						# 	git clone $PAGURE_COMMIT_REPO
-						# 	cd tensorflow
-						# 	source ../pagure_commit.sh "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${FILES}" "${whlff}"
-						# 	cd ..
-						# 	git clone $GIT_RELEASE_REPO
-						# 	cd tensorflow-wheels
-						# 	source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-						# else
-						# 	git clone $GIT_RELEASE_REPO
-						# 	cd tensorflow-wheels
-						# 	source ../release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-						# fi
 					} | tee -a test_wheel.log 
 				fi
 			fi
@@ -488,6 +472,7 @@ if ls -l  /workspace/build.log; then
 fi
 
 
+
 ### enable HOST_ON_HTTP_SERVER only which deployment config and NOT with Jobs. 
 if [[ $HOST_ON_HTTP_SERVER = "y" ]]
 then
@@ -498,11 +483,4 @@ then
 	else python -m http.server $PORT ; 
 	fi
 fi
-
-						#source /tmp/release_dir/tf_env_collect.sh
-						#mv tf_env.txt /workspace/bins/
-						#cp /workspace/bins/tf_env.txt /tmp/release_dir/
-
-
-
 
