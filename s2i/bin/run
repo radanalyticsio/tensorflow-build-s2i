@@ -81,6 +81,8 @@ echo "which_pip_site="`pip --version |awk '{print $4}' `
 echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
 pip list 2>&1 | grep "YAML\|proto\|numpy"
 
+export JAVA_HOME=$(readlink -f $JAVA_HOME)
+ls -l $JAVA_HOME
 
 
 # Naming the directory according to the naming convention
@@ -277,11 +279,13 @@ cd /workspace
 echo "####################################"
 echo "      clone git repo.....       	  "
 echo "####################################"
+#git clone --branch=r1.10 --depth=1 https://github.com/tensorflow/tensorflow.git .
 git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
 echo "####################################"
 echo "      test.....       	      "
 echo "####################################"
-bazel test -c opt -- //tensorflow/...
+#echo "${TF_GIT_BRANCH//r}"
+bazel test -c opt -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/...
 echo "####################################"
 echo "      configure.....       	      "
 echo "####################################"
