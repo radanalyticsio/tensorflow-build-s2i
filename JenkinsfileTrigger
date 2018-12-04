@@ -1,0 +1,103 @@
+def project = "tensorflow"
+
+def buildTargets = [
+  "fedora26": "registry.fedoraproject.org/f26/s2i-core",
+  "fedora27": "registry.fedoraproject.org/f27/s2i-core",
+  "fedora28": "registry.fedoraproject.org/f28/s2i-core",
+  "centos7": "openshift/base-centos7"
+]
+
+def pythonVersions = ["2.7", "3.5", "3.6"]
+
+def templates = ["tensorflow-build-image.json", "tensorflow-build-job.json"]
+
+node {
+  properties([
+    [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/tensorflow/tensorflow/'],
+    pipelineTriggers([
+      [$class: 'GenericTrigger',
+        genericVariables: [
+          [key: 'release_version', value: '$.release.tag_name'],
+        ],
+        genericHeaderVariables: [
+          [key: 'X-GitHub-Event', regexpFilter: '']
+        ],
+        causeString: 'Tensorflow has released version $release_version',
+        regexpFilterText: '$x_github_event',
+        regexpFilterExpression: '^release$'
+      ]
+    ])
+  ])
+
+  try {
+    stage("Checkout") {
+      checkout scm
+    }
+
+    stage("Create Templates") {
+      openshift.withCluster() {
+        openshift.withProject(project) {
+          templates.each { template ->
+            def templateFileName = template.take(template.lastIndexOf("."))
+            def templateSelector = openshift.selector("template", templateFileName)
+
+            if (!templateSelector.exists()) {
+              openshift.create(readFile(template))
+            } else {
+              openshift.replace(readFile(template))
+            }
+          }
+        }
+      }
+    }
+
+    stage("Tensorflow-Trigger") {
+      def builds = [:]
+
+      buildTargets.each { operatingSystem, s2iImage ->
+        pythonVersions.each { pythonVersion ->
+
+          if (jenkins.model.Jenkins.instance.getItem("tensorflow-${operatingSystem}-${pythonVersion}") == null) {
+            jobDsl  scriptText: createJob(operatingSystem, pythonVersion)
+          }
+
+          builds["tensorflow-${operatingSystem}-${pythonVersion}"] = {
+            build job: "tensorflow-${operatingSystem}-${pythonVersion}",
+              parameters: [
+                string(name: "OPERATING_SYSTEM", value: "${operatingSystem}"),
+                string(name: "S2I_IMAGE", value: "${s2iImage}"),
+                string(name: "PYTHON_VERSION", value: "${pythonVersion}"),
+              ]
+          }
+        }
+      }
+
+      parallel builds
+    }
+  } catch (e) {
+    echo e.toString()
+    throw e
+  }
+}
+
+def createJob(operatingSystem, pythonVersion) {
+  return """
+    pipelineJob("tensorflow-${operatingSystem}-${pythonVersion}") {
+      parameters {
+        stringParam("BAZEL_VERSION", "", "Version of Bazel for Tensorflow")
+        stringParam("CUSTOM_BUILD", "", "Custom build command for Tensorflow")
+        stringParam("OPERATING_SYSTEM", "", "Which Operating System is the job being built for")
+        stringParam("PYTHON_VERSION", "", "Version of Python to be used in the job")
+        stringParam("S2I_IMAGE", "", "Source 2 Image base image ")
+        stringParam("TF_GIT_BRANCH", "", "Tensorflow branch used when checking out code")
+      }
+      definition {
+        cpsScm {
+          scm {
+            git("https://github.com/thoth-station/tensorflow-build-s2i", "*/master")
+          }
+        }
+      }
+    }
+  """
+}

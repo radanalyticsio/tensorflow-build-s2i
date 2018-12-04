@@ -22,27 +22,27 @@ node {
             builderImageStream = openshift.process(
               tensorflowImageTemplate,
               "-p", "APPLICATION_NAME=tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}",
-              "-p", "S2I_IMAGE=${s2iImage}",
+              "-p", "BAZEL_VERSION=${bazelVersion}",
               "-p", "DOCKER_FILE_PATH=Dockerfile.${operatingSystem}",
               "-p", "NB_PYTHON_VER=${pythonVersion}",
-              "-p", "BAZEL_VERSION=${bazelVersion}"
+              "-p", "S2I_IMAGE=${s2iImage}"
             )
             def createdImageStream = openshift.create(builderImageStream)
             createdImageStream.describe()
-            def builds = createdImageStream.narrow('bc')
-            builds.logs('-f')
+            def imageStreamBuildConfig = createdImageStream.narrow('bc')
+            imageStreamBuildConfig.logs('-f')
 
-            def completedSuccessfully = false
+            def imageBuildCompleted = false
             timeout(1) {
-              builds.related('builds').untilEach {
+              imageStreamBuildConfig.related('builds').untilEach {
                 if (it.object().status.phase == "Complete") {
-                  completedSuccessfully = true
+                  imageBuildCompleted = true
                 }
-                return completedSuccessfully
+                return imageBuildCompleted
               }
             }
 
-            if (!completedSuccessfully) {
+            if (!imageBuildCompleted) {
               error("An error has occured in tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}")
             }
           }
@@ -52,33 +52,33 @@ node {
             buildJob = openshift.process(
               tensorflowJobTemplate,
               "-p", "APPLICATION_NAME=tf-${operatingSystem}-${pythonVersionNoDecimal}-job-${uuid}",
-              "-p", "BUILDER_IMAGESTREAM=tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}",
-              "-p", "NB_PYTHON_VER=${pythonVersion}",
-              "-p", "CUSTOM_BUILD=${customBuild}",
               "-p", "BAZEL_VERSION=${bazelVersion}",
-              "-p", "TF_GIT_BRANCH=${tfBranch}",
-              "-p", "SESHETA_GITHUB_ACCESS_TOKEN=${env.GIT_TOKEN}"
+              "-p", "BUILDER_IMAGESTREAM=tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}",
+              "-p", "CUSTOM_BUILD=${customBuild}",
+              "-p", "NB_PYTHON_VER=${pythonVersion}",
+              "-p", "SESHETA_GITHUB_ACCESS_TOKEN=${env.GIT_TOKEN}",
+              "-p", "TF_GIT_BRANCH=${tfBranch}"
             )
             def createdJob = openshift.create(buildJob)
-            def pods = createdJob.related('pods')
+            def jobPods = createdJob.related('pods')
             timeout(5) {
-              pods.untilEach {
+              jobPods.untilEach {
                 return (it.object().status.phase == "Running")
               }
             }
-            pods.logs("-f")
+            jobPods.logs("-f")
 
-            def completedSuccessfully = false
+            def jobSucceeded = false
             timeout(1) {
               pods.untilEach {
                 if (it.object().status.phase == "Succeeded") {
-                  completedSuccessfully = true
+                  jobSucceeded = true
                 }
-                return completedSuccessfully
+                return jobSucceeded
               }
             }
 
-            if (!completedSuccessfully) {
+            if (!jobSucceeded) {
               error("An error has occured in tf-${operatingSystem}-${pythonVersionNoDecimal}-job-${uuid}")
             }
           }
