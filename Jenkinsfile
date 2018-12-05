@@ -70,7 +70,7 @@ node {
 
             def jobSucceeded = false
             timeout(1) {
-              pods.untilEach {
+              jobPods.untilEach {
                 if (it.object().status.phase == "Succeeded") {
                   jobSucceeded = true
                 }
