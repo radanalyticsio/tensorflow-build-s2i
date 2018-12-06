@@ -12,24 +12,26 @@ def pythonVersions = ["2.7", "3.5", "3.6"]
 def templates = ["tensorflow-build-image.json", "tensorflow-build-job.json"]
 
 node {
-  properties([
-    [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/tensorflow/tensorflow/'],
-    pipelineTriggers([
-      [$class: 'GenericTrigger',
-        genericVariables: [
-          [key: 'release_version', value: '$.release.tag_name'],
-        ],
-        genericHeaderVariables: [
-          [key: 'X-GitHub-Event', regexpFilter: '']
-        ],
-        causeString: 'Tensorflow has released version $release_version',
-        regexpFilterText: '$x_github_event',
-        regexpFilterExpression: '^release$'
-      ]
-    ])
-  ])
-
   try {
+    withCredentials([string(credentialsId: 'tensorflowWebhookToken', variable: 'tensorflowWebhookToken')]) {
+      properties([
+        [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/tensorflow/tensorflow/'],
+        pipelineTriggers([
+          [$class: 'GenericTrigger',
+            genericVariables: [
+              [key: 'release_version', value: '$.release.tag_name'],
+            ],
+            genericHeaderVariables: [
+              [key: 'X-GitHub-Event', regexpFilter: '']
+            ],
+            token: tensorflowWebhookToken,
+            regexpFilterText: '$x_github_event',
+            regexpFilterExpression: '^release$'
+          ]
+        ])
+      ])
+    }
+
     stage("Checkout") {
       checkout scm
     }
@@ -62,12 +64,15 @@ node {
           }
 
           builds["tensorflow-${operatingSystem}-${pythonVersion}"] = {
-            build job: "tensorflow-${operatingSystem}-${pythonVersion}",
-              parameters: [
-                string(name: "OPERATING_SYSTEM", value: "${operatingSystem}"),
-                string(name: "S2I_IMAGE", value: "${s2iImage}"),
-                string(name: "PYTHON_VERSION", value: "${pythonVersion}"),
-              ]
+            lock(label: "tensorflow_jobs", quantity: 1, variable: "LOCKED") {
+              println "Locked resource: ${env.LOCKED}"
+              build job: "tensorflow-${operatingSystem}-${pythonVersion}",
+                parameters: [
+                  string(name: "OPERATING_SYSTEM", value: "${operatingSystem}"),
+                  string(name: "S2I_IMAGE", value: "${s2iImage}"),
+                  string(name: "PYTHON_VERSION", value: "${pythonVersion}"),
+                ]
+            }
           }
         }
       }
@@ -88,13 +93,17 @@ def createJob(operatingSystem, pythonVersion) {
         stringParam("CUSTOM_BUILD", "", "Custom build command for Tensorflow")
         stringParam("OPERATING_SYSTEM", "", "Which Operating System is the job being built for")
         stringParam("PYTHON_VERSION", "", "Version of Python to be used in the job")
-        stringParam("S2I_IMAGE", "", "Source 2 Image base image ")
+        stringParam("S2I_IMAGE", "", "Source 2 Image base image")
         stringParam("TF_GIT_BRANCH", "", "Tensorflow branch used when checking out code")
       }
       definition {
         cpsScm {
           scm {
-            git("https://github.com/thoth-station/tensorflow-build-s2i", "*/master")
+            git {
+              remote { url("https://github.com/thoth-station/tensorflow-build-s2i") }
+              branch("*/master")
+              extensions { }
+            }
           }
         }
       }
