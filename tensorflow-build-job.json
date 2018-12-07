@@ -137,6 +137,14 @@
                                         "value": "${TF_NEED_TENSORRT}"
                                     },
                                     {
+                                        "name": "TF_NEED_ROCM",
+                                        "value": "${TF_NEED_ROCM}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_IGNITE",
+                                        "value": "${TF_NEED_IGNITE}"
+                                    },
+                                    {
                                         "name": "NCCL_INSTALL_PATH",
                                         "value": "${NCCL_INSTALL_PATH}"
                                     },
@@ -170,11 +178,11 @@
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "resources": {
                                     "limits": {
-                                        "cpu": "4",
-                                        "memory": "8Gi"
+                                        "cpu": "8",
+                                        "memory": "10Gi"
                                     },
                                     "requests": {
-                                        "cpu": "4",
+                                        "cpu": "6",
                                         "memory": "8Gi"
                                     }
                                 }
@@ -353,6 +361,18 @@
         {
             "name": "TF_NEED_TENSORRT",
             "description": "TF_NEED_TENSORRT",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_IGNITE",
+            "description": "TF_NEED_IGNITE",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_ROCM",
+            "description": "TF_NEED_ROCM",
             "value": "0",
             "required": true
         },

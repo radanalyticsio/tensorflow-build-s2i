@@ -42,6 +42,10 @@ echo "TF_NEED_OPENCL_SYCL="$TF_NEED_OPENCL_SYCL
 echo "TF_DOWNLOAD_CLANG="$TF_DOWNLOAD_CLANG
 echo "TF_SET_ANDROID_WORKSPACE="$TF_SET_ANDROID_WORKSPACE
 
+### 1.12 tensorflow needs below new configs
+echo "TF_NEED_IGNITE="$TF_NEED_IGNITE
+echo "TF_NEED_ROCM="$TF_NEED_ROCM
+
 ### These ENVs should be correctly set.
 echo "PATH = "$PATH
 echo "JAVA_HOME = "$JAVA_HOME
@@ -97,8 +101,6 @@ for varname in ${!TF_NEED_*}; do
     fi
 done
 TENSORFLOW_BUILD_DIR_NAME=$OSVER/${TF_GIT_BRANCH//r}/${FINAL_STR::-1}
-
-
 
 # Dev Mode
 if [[ $TEST_LOOP = "y" ]]
@@ -260,8 +262,6 @@ echo | gcc -E -Wp,-v -
 echo "which_pip_version="`pip --version `
 pip list 2>&1 | grep "yaml\|proto\|numpy"
 
-
-
 ### Setup Bazel
 cd /workspace
 if command_exists bazel ; then 
@@ -322,7 +322,7 @@ fi
 #--copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma
 
 
-
+#bazel build --config=mkl -c opt --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mavx512f --copt=-mavx512pf --copt=-mavx512cd --copt=-mavx512er --copt="-DEIGEN_USE_VML" //tensorflow/tools/pip_package:build_pip_package
 ### enable TEST_LOOP only which deployment config and NOT with Jobs. 
 if [[ $TEST_LOOP = "y" ]]
 then
@@ -449,11 +449,12 @@ else
 						whlff=$(basename `ls *.whl`)
 						OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
 						#OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
-						RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH
 						if [ $TF_NEED_CUDA = "1" ]; then
 							GIT_TAG="tf-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
+							RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH/gpu
 						else
 							GIT_TAG="tf-${TF_GIT_BRANCH}-cpu-$(date +%Y-%m-%d_%H%M%S)"
+							RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH/cpu
 						fi
 						NOTES=$(python /tmp/release_dir/utils.py /tmp/release_dir/build_info.yaml)
 						GIT_TOKEN="${GIT_TOKEN}"
