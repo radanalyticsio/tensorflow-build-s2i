@@ -1,0 +1,41 @@
+oc delete all -l appTypes=tensorflow-build-image
+oc delete all -l appTypes=tensorflow-build-job
+
+PYTH_VERSION=2.7
+
+============
+Build-Image
+============
+
+oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-fedora27-build-image-${PYTH_VERSION//.} --param=S2I_IMAGE=registry.fedoraproject.org/f27/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora27 --param=NB_PYTHON_VER=$PYTH_VERSION --param=VERSION=1
+
+
+oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-fedora28-build-image-${PYTH_VERSION//.} --param=S2I_IMAGE=registry.fedoraproject.org/f28/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora28 --param=NB_PYTHON_VER=$PYTH_VERSION --param=VERSION=1
+
+
+oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-centos7-build-image-${PYTH_VERSION//.} 
+--param=S2I_IMAGE=openshift/base-centos7   --param=DOCKER_FILE_PATH=Dockerfile.centos7 
+--param=NB_PYTHON_VER=$PYTH_VERSION  --param=VERSION=1
+
+
+oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-rhel75-build-image-${PYTH_VERSION//.} --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7   --param=DOCKER_FILE_PATH=Dockerfile.rhel75 --param=NB_PYTHON_VER=$PYTH_VERSION --param=VERSION=1
+
+
+
+============
+Build-Job
+============
+
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-fedora27-build-job-${PYTH_VERSION//.} --param=BUILDER_IMAGESTREAM=tf-fedora27-build-image-${PYTH_VERSION//.}:1  --param=NB_PYTHON_VER=$PYTH_VERSION   --param=CUSTOM_BUILD="bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  --param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN 
+
+
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-fedora28-build-job-${PYTH_VERSION//.} --param=BUILDER_IMAGESTREAM=tf-fedora28-build-image-${PYTH_VERSION//.}:1  --param=NB_PYTHON_VER=$PYTH_VERSION   --param=CUSTOM_BUILD="bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  --param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN 
+
+
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-centos7-build-job-${PYTH_VERSION//.} --param=BUILDER_IMAGESTREAM=tf-centos7-build-image-${PYTH_VERSION//.}:1  --param=NB_PYTHON_VER=$PYTH_VERSION   --param=CUSTOM_BUILD="bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  --param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN 
+
+
+oc new-app --template=tensorflow-build-job  --param=APPLICATION_NAME=tf-rhel75-build-job-${PYTH_VERSION//.} --param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:1  --param=NB_PYTHON_VER=$PYTH_VERSION   --param=CUSTOM_BUILD="bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package"  --param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN 
+
+
+
