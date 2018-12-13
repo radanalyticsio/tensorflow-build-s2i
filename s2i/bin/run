@@ -57,6 +57,7 @@ echo "PYTHON_BIN_PATH ="$PYTHON_BIN_PATH
 echo "PORT = "$PORT
 echo "BUILD_OPTS = "$BUILD_OPTS
 echo "CUSTOM_BUILD = "$CUSTOM_BUILD
+echo "CUSTOM_TEST = "$CUSTOM_TEST
 echo "TEST_LOOP = "$TEST_LOOP
 echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
 echo "NB_PYTHON_VER = "$NB_PYTHON_VER
@@ -289,10 +290,15 @@ echo "####################################"
 echo "      configure.....       	      "
 echo "####################################"
 ./configure
-echo "####################################"
-echo "      test.....       	      "
-echo "####################################"
-bazel test -c opt --local_resources 2048,.5,1.0 -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/...
+echo "TF_ENABLE_TEST = "$TF_ENABLE_TEST
+if [ $TF_ENABLE_TEST = "1" ]; then 
+	echo "####################################"
+	echo "      test.....   		       	  "
+	echo "####################################"
+	eval "$CUSTOM_TEST" || echo "TEST FAILED"
+	#bazel test -c opt --local_resources 2048,.5,1.0 -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/... 
+fi
+
 
 
 export PATH=$HOME/bin:$PATH

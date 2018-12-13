@@ -171,6 +171,14 @@
                                     {
                                         "name": "GIT_TOKEN",
                                         "value": "${SESHETA_GITHUB_ACCESS_TOKEN}"
+                                    },
+                                    {
+                                        "name": "CUSTOM_TEST",
+                                        "value": "${CUSTOM_TEST}"
+                                    },
+                                    {
+                                        "name": "TF_ENABLE_TEST",
+                                        "value": "${TF_ENABLE_TEST}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -416,6 +424,18 @@
             "name": "GIT_RELEASE_REPO",
             "description": "GIT_RELEASE_REPO",
             "value": "https://github.com/AICoE/tensorflow-wheels.git",
+            "required": true
+        },
+        {
+            "name": "CUSTOM_TEST",
+            "description": "CUSTOM_TEST",
+            "value": "bazel test -c opt --local_resources 2048,.5,1.0 -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/... ",
+            "required": true
+        },
+        {
+            "name": "TF_ENABLE_TEST",
+            "description": "TF_ENABLE_TEST",
+            "value": "0",
             "required": true
         }
     ]
