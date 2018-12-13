@@ -224,8 +224,8 @@ echo
 #\"swap_total\": \""${SWAP_TOTAL}"\", 
 #pip install pyyaml  
 rm -fr build_info.*
-#echo -e  $TF_BUILD_INFO | python -c 'import yaml,json,sys;obj=json.load(sys.stdin);yy=yaml.safe_dump(obj, default_flow_style=False)
-#print(yy)' >> build_info.yaml
-
 echo -e $TF_BUILD_INFO >> build_info.json
+echo -e  $TF_BUILD_INFO | python -c 'import yaml,json,sys;obj=json.load(sys.stdin);yy=yaml.safe_dump(obj, default_flow_style=False)
+print(yy)' >> build_info.yaml
+
 
