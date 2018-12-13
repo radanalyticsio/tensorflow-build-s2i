@@ -85,8 +85,7 @@ echo "which_pip_site="`pip --version |awk '{print $4}' `
 echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
 pip list 2>&1 | grep "YAML\|proto\|numpy"
 
-export JAVA_HOME=$(readlink -f $JAVA_HOME)
-ls -l $JAVA_HOME
+
 
 
 # Naming the directory according to the naming convention
@@ -281,15 +280,19 @@ echo "      clone git repo.....       	  "
 echo "####################################"
 #git clone --branch=r1.10 --depth=1 https://github.com/tensorflow/tensorflow.git .
 git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
-echo "####################################"
-echo "      test.....       	      "
-echo "####################################"
 #echo "${TF_GIT_BRANCH//r}"
-bazel test -c opt -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/...
+#Python Configuration Error: Invalid python library path: /usr/lib64/python3.6/site-packages
+#/workspace/tensorflow/java/BUILD:73:1: no such package '@local_jdk//': Expected directory at /usr/lib/jvm/java-1.8.0-openjdk-1.8.0* but it does not exist. and referenced by
+export JAVA_HOME=$(readlink -f $JAVA_HOME)
+ls -l $JAVA_HOME
 echo "####################################"
 echo "      configure.....       	      "
 echo "####################################"
 ./configure
+echo "####################################"
+echo "      test.....       	      "
+echo "####################################"
+bazel test -c opt --local_resources 2048,.5,1.0 -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/...
 
 
 export PATH=$HOME/bin:$PATH
