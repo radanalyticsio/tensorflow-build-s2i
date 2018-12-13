@@ -170,7 +170,7 @@
                                     },
                                     {
                                         "name": "GIT_TOKEN",
-                                        "value": "${SESHETA_GITHUB_ACCESS_TOKEN}"
+                                        "value": "${GIT_TOKEN}"
                                     },
                                     {
                                         "name": "CUSTOM_TEST",
@@ -415,8 +415,8 @@
             "required": true
         },
         {
-            "name": "SESHETA_GITHUB_ACCESS_TOKEN",
-            "description": "SESHETA_GITHUB_ACCESS_TOKEN value is required if you release to github",
+            "name": "GIT_TOKEN",
+            "description": "GIT_TOKEN value is required if you release to github",
             "value": "",
             "required": true
         },

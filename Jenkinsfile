@@ -56,7 +56,7 @@ node {
               "-p", "BUILDER_IMAGESTREAM=tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}",
               "-p", "CUSTOM_BUILD=${customBuild}",
               "-p", "NB_PYTHON_VER=${pythonVersion}",
-              "-p", "SESHETA_GITHUB_ACCESS_TOKEN=${env.GIT_TOKEN}",
+              "-p", "GIT_TOKEN=${env.GIT_TOKEN}",
               "-p", "TF_GIT_BRANCH=${tfBranch}"
             )
             def createdJob = openshift.create(buildJob)
