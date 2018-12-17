@@ -1,5 +1,8 @@
+// Name of project in OpenShift
 def project = "tensorflow"
 
+// Map of OS targets to test Tensorflow with
+// Key: name of os, Value: s2i image registry
 def buildTargets = [
   "fedora26": "registry.fedoraproject.org/f26/s2i-core",
   "fedora27": "registry.fedoraproject.org/f27/s2i-core",
@@ -7,8 +10,10 @@ def buildTargets = [
   "centos7": "openshift/base-centos7"
 ]
 
+// list of python versions to be used when testing
 def pythonVersions = ["2.7", "3.5", "3.6"]
 
+// List of templates needed for the build process
 def templates = ["tensorflow-build-image.json", "tensorflow-build-job.json"]
 
 node {
@@ -39,6 +44,7 @@ node {
     stage("Create Templates") {
       openshift.withCluster() {
         openshift.withProject(project) {
+          // Loop through templates and make sure they exist in OpenShift
           templates.each { template ->
             def templateFileName = template.take(template.lastIndexOf("."))
             def templateSelector = openshift.selector("template", templateFileName)
@@ -56,16 +62,23 @@ node {
     stage("Tensorflow-Trigger") {
       def builds = [:]
 
+      // Loop through all the OS targets we will be building
       buildTargets.each { operatingSystem, s2iImage ->
+        // Loop through the different versions of python we want to test
         pythonVersions.each { pythonVersion ->
 
+          // Check existance of the jenkins job "tensorflow-${operatingSystem}-${pythonVersion}"
           if (jenkins.model.Jenkins.instance.getItem("tensorflow-${operatingSystem}-${pythonVersion}") == null) {
+            // Create Job if it does not exists
             jobDsl  scriptText: createJob(operatingSystem, pythonVersion)
           }
 
+          // Add Job to map of jobs to be run in parallel
           builds["tensorflow-${operatingSystem}-${pythonVersion}"] = {
+            // Lock resource so that only a certain number of jobs can run at a time
             lock(label: "tensorflow_jobs", quantity: 1, variable: "LOCKED") {
               println "Locked resource: ${env.LOCKED}"
+              // Seed job
               build job: "tensorflow-${operatingSystem}-${pythonVersion}",
                 parameters: [
                   string(name: "OPERATING_SYSTEM", value: "${operatingSystem}"),
@@ -77,6 +90,7 @@ node {
         }
       }
 
+      // Run all jobs from map in parallel
       parallel builds
     }
   } catch (e) {
@@ -85,6 +99,9 @@ node {
   }
 }
 
+// Create job
+// Accepts OS and version of python
+// Will generate job using jobDsl
 def createJob(operatingSystem, pythonVersion) {
   return """
     pipelineJob("tensorflow-${operatingSystem}-${pythonVersion}") {
