@@ -60,7 +60,7 @@ python_bin_path=$(which python || which python3 || die "Cannot find Python binar
   echo `echo "CUSTOM_BUILD = "$CUSTOM_BUILD`
   echo `echo "TEST_LOOP = "$TEST_LOOP`
   echo `echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH`
-  echo `echo "NB_PYTHON_VER = "$NB_PYTHON_VER`
+  echo `echo "PYTHON_VERSION = "$PYTHON_VERSION`
   echo `echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER`
   echo `echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE`
 

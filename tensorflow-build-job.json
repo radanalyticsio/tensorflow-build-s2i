@@ -149,8 +149,12 @@
                                         "value": "${NCCL_INSTALL_PATH}"
                                     },
                                     {
-                                        "name": "NB_PYTHON_VER",
-                                        "value": "${NB_PYTHON_VER}"
+                                        "name": "TEST_LOOP",
+                                        "value": "${TEST_LOOP}"
+                                    },
+                                    {
+                                        "name": "PYTHON_VERSION",
+                                        "value": "${PYTHON_VERSION}"
                                     },
                                     {
                                         "name": "BAZEL_VERSION",
@@ -159,6 +163,10 @@
                                     {
                                         "name": "TF_GIT_BRANCH",
                                         "value": "${TF_GIT_BRANCH}"
+                                    },
+                                    {
+                                        "name": "HOST_ON_HTTP_SERVER",
+                                        "value": "${HOST_ON_HTTP_SERVER}"
                                     },
                                     {
                                         "name": "TEST_WHEEL_FILE",
@@ -397,7 +405,7 @@
             "required": true
         },
         {
-            "name": "NB_PYTHON_VER",
+            "name": "PYTHON_VERSION",
             "description": "Python version 2.7,3.5,3.6 .",
             "value": "3.6",
             "required": true
@@ -415,6 +423,24 @@
             "required": true
         },
         {
+            "name": "HOST_ON_HTTP_SERVER",
+            "description": "USE ONLY with DeploymentConfig.(y or n)If y then http server.",
+            "value": "n",
+            "required": true
+        },
+        {
+            "name": "PORT",
+            "description": "USE ONLY with DeploymentConfig.http server port.",
+            "value": "8080",
+            "required": true
+        },
+        {
+            "name": "TEST_WHEEL_FILE",
+            "description": "(y or n)To run a simple test code to test wheel file.",
+            "value": "y",
+            "required": true
+        },
+        {
             "name": "GIT_TOKEN",
             "description": "GIT_TOKEN value is required if you release to github",
             "value": "",
@@ -424,6 +450,12 @@
             "name": "GIT_RELEASE_REPO",
             "description": "GIT_RELEASE_REPO",
             "value": "https://github.com/AICoE/tensorflow-wheels.git",
+            "required": true
+        },
+        {
+            "name": "TEST_LOOP",
+            "description": "USE ONLY with DeploymentConfig.(y or n).If y then start a while loop.If y then http won't start.",
+            "value": "n",
             "required": true
         },
         {
