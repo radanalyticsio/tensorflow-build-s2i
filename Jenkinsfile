@@ -26,7 +26,7 @@ node {
               "-p", "APPLICATION_NAME=tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}",
               "-p", "BAZEL_VERSION=${bazelVersion}",
               "-p", "DOCKER_FILE_PATH=Dockerfile.${operatingSystem}",
-              "-p", "NB_PYTHON_VER=${pythonVersion}",
+              "-p", "PYTHON_VERSION=${pythonVersion}",
               "-p", "S2I_IMAGE=${s2iImage}"
             )
             def createdImageStream = openshift.create(builderImageStream)
@@ -61,7 +61,7 @@ node {
               "-p", "BAZEL_VERSION=${bazelVersion}",
               "-p", "BUILDER_IMAGESTREAM=tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}",
               "-p", "CUSTOM_BUILD=${customBuild}",
-              "-p", "NB_PYTHON_VER=${pythonVersion}",
+              "-p", "PYTHON_VERSION=${pythonVersion}",
               "-p", "GIT_TOKEN=${env.GIT_TOKEN}",
               "-p", "TF_GIT_BRANCH=${tfBranch}"
             )
