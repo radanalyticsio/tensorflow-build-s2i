@@ -120,7 +120,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "PATH=$PATH" \
     && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
     && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \
-    && echo "PYTHON_VER=$PYTHON_VER" \
+    && echo "PYTHON_VERSION=$PYTHON_VERSION" \
     && ls -l /usr/bin/python* \
     && echo "-----IMAGE_TEST--------"
 

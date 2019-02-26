@@ -134,7 +134,7 @@ fi
 
 
 
-sh $BUILD_TOOLS_DIR/python_script.sh
+source $BUILD_TOOLS_DIR/python_script.sh
 echo "The Python conundrum.DONE."
 
 
