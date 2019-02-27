@@ -59,6 +59,8 @@ GPU is not yet supported.
 * `TF_NEED_OPENCL_SYCL`:=0
 * `TF_DOWNLOAD_CLANG`:=0
 * `TF_SET_ANDROID_WORKSPACE`:=0
+* `TF_NEED_IGNITE`:=0
+* `TF_NEED_ROCM`:=0
 
 Here is the default build command used to build tensorflow. 
 * `CUSTOM_BUILD`:=`bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package`
@@ -76,7 +78,7 @@ Following should be left blank for a build job.
 *set some environment values for convenience*
 ```
 # valid values are 2.7,3.6,3.5
-PYTH_VERSION=3.6
+PYTHON_VERSION=3.6
 
 # git token and repo
 export GIT_TOKEN=
@@ -93,14 +95,14 @@ oc create -f tensorflow-build-dc.json
 #### 2. Create Tensorflow build image
 ```
 oc new-app --template=tensorflow-build-image \
---param=APPLICATION_NAME=tf-rhel75-build-image-${PYTH_VERSION//.} \
+--param=APPLICATION_NAME=tf-rhel75-build-image-${PYTHON_VERSION//.} \
 --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7  \
 --param=DOCKER_FILE_PATH=Dockerfile.rhel75  \
---param=NB_PYTHON_VER=$PYTH_VERSION \
---param=VERSION=2 \
---param=BAZEL_VERSION=0.15.0
+--param=PYTHON_VERSION=$PYTHON_VERSION \
+--param=BUILD_VERSION=2 \
+--param=BAZEL_VERSION=0.22.0
 ```
-The above command creates a tensorflow builder image `APPLICATION_NAME:VERSION` for specific OS.
+The above command creates a tensorflow builder image `APPLICATION_NAME:BUILD_VERSION` for specific OS.
 
 The values for `S2I_IMAGE` are :
 - Fedora26- `registry.fedoraproject.org/f26/s2i-core`
@@ -126,14 +128,14 @@ And then deploy from UI with appropriate values.
 
 ```
 oc new-app --template=tensorflow-build-job  \
---param=APPLICATION_NAME=tf-rhel75-build-job-${PYTH_VERSION//.} \
---param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
---param=NB_PYTHON_VER=$PYTH_VERSION  \
---param=BAZEL_VERSION=0.15.0 \
+--param=APPLICATION_NAME=tf-rhel75-build-job-${PYTHON_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTHON_VERSION//.}:2  \
+--param=PYTHON_VERSION=$PYTHON_VERSION  \
+--param=BAZEL_VERSION=0.22.0 \
 --param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO  \
---param=SESHETA_GITHUB_ACCESS_TOKEN=$GIT_TOKEN
+--param=GIT_TOKEN=$GIT_TOKEN
 ```
-NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2.
+NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:BUILD_VERSION` from step 2.
 
 *OR*
 
@@ -146,11 +148,11 @@ You can generate Personal API access token at https://github.com/settings/tokens
 ### To create a DEV environment for debugging build issues :
 ```
 oc new-app --template=tensorflow-build-dc  \
---param=APPLICATION_NAME=tf-rhel75-build-dc-${PYTH_VERSION//.} \
---param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTH_VERSION//.}:2  \
---param=NB_PYTHON_VER=$PYTH_VERSION  \
+--param=APPLICATION_NAME=tf-rhel75-build-dc-${PYTHON_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTHON_VERSION//.}:2  \
+--param=PYTHON_VERSION=$PYTHON_VERSION  \
 --param=TEST_LOOP=y
 ```
-NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2. 
+NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:BUILD_VERSION` from step 2. 
 
 See [Usage example](https://github.com/thoth-station/tensorflow-build-s2i/blob/master/Developing.md)
