@@ -77,21 +77,21 @@ node {
             jobPods.logs("-f")
 
             // Check OpenShift to see if the build has Succeeded
-            def jobSucceeded = false
-            timeout(1) {
-              jobPods.untilEach {
-                if (it.object().status.phase == "Succeeded") {
-                  jobSucceeded = true
-                }
-                return jobSucceeded
-              }
-            }
+            //def jobSucceeded = false
+            //timeout(5) {
+              //jobPods.untilEach {
+                //if (it.object().status.phase == "Succeeded") {
+                  //jobSucceeded = true
+                //}
+                //return jobSucceeded
+              //}
+            //}
 
             // If build is not completed after 1 minuete, we are assuming there was an error
             // And throwing to the catch block
-            if (!jobSucceeded) {
-              error("An error has occured in tf-${operatingSystem}-${pythonVersionNoDecimal}-job-${uuid}")
-            }
+            //if (!jobSucceeded) {
+              //error("An error has occured in tf-${operatingSystem}-${pythonVersionNoDecimal}-job-${uuid}")
+            //}
           }
         } catch (e) {
           echo e.toString()
@@ -99,8 +99,8 @@ node {
         } finally {
           // Delete all resources related to the current build
           stage("Cleanup") {
-            openshift.delete(builderImageStream)
-            openshift.delete(buildJob)
+            //openshift.delete(builderImageStream)
+            //openshift.delete(buildJob)
           }
         }
       }
