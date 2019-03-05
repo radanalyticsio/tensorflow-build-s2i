@@ -123,10 +123,24 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "-----IMAGE_TEST--------"
 
 
+###&& cd /tmp && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys  595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
 RUN  wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
-    && cd /tmp && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
-    && gpg --batch --verify /tmp/tini.asc /tmp/tini  \
+    && cd /tmp \
+    && \
+    TINI_GPGKEY=595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7; \
+    found=''; \
+    for server in \
+        ha.pool.sks-keyservers.net \
+        hkp://keyserver.ubuntu.com:80 \
+        hkp://p80.pool.sks-keyservers.net:80 \
+        pgp.mit.edu \
+    ; do \
+        echo "Fetching GPG key $TINI_GPGKEY from $server"; \
+        gpg --batch --keyserver "$server" --recv-keys "$TINI_GPGKEY" && found=yes && break; \
+    done; \
+    test -z "$found" && echo >&2 "ERROR: failed to fetch GPG key $TINI_GPGKEY" && exit 1; \
+    gpg --batch --verify /tmp/tini.asc /tmp/tini \
     && mv /tmp/tini /usr/local/bin/tini \
     && chmod +x /usr/local/bin/tini \
     && chown -R 1001:1001 /opt/app-root \

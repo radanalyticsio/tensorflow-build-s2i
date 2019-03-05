@@ -26,6 +26,11 @@ env_check () {
   # The exclamation mark makes param to get the value of the variable with that name.
   if [[ -z "${!param}" ]];then echo "$1 is undefined" && $exit_function; else echo "$1 = "${!param} ;fi 
 }
+check_oauth_scope() {
+  # check to see if X-OAuth-Scopes has repo
+  curl --silent -i -H "Authorization: token $GIT_TOKEN" https://api.github.com/rate_limit | 
+    grep "X-OAuth-Scopes:" | tr -d ":" | awk -v N=$2 '{print $2}'                                   # Pluck JSON value
+}
 
 ### ENV vars for configure script.
 env_check TF_NEED_JEMALLOC
@@ -78,6 +83,8 @@ env_check TEST_WHEEL_FILE MY_EXIT_1
 env_check GIT_RELEASE_REPO MY_EXIT_1
 env_check HOME
 
+OUATH_SCOPE=$(check_oauth_scope)
+env_check OUATH_SCOPE
 echo "============================================"
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
