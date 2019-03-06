@@ -276,9 +276,9 @@ else
 		GIT_TOKEN="${GIT_TOKEN}"
 		RELEASE_FILES="$PIP_RELEASE_FOLDER/${BINARY_FILE} /workspace/bins/build_info.yaml /workspace/bins/build_info.json"
 		env_check RELEASE_FILES
-		git clone $GIT_RELEASE_REPO
+		git clone $GIT_RELEASE_REPO upload-repo
 		ls -l
-		cd tensorflow-wheels
+		cd upload-repo
 		source $BUILD_TOOLS_DIR/release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${RELEASE_NOTES}" "${GIT_TOKEN}" "${RELEASE_FILES}"
 	fi #end wheel
 fi # end build
