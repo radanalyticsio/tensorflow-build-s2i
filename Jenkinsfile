@@ -13,6 +13,7 @@ node {
   def builderImageStream = ''
   def buildJob = ''
   def uuid = UUID.randomUUID().toString()
+  def jobPods = ''
 
   openshift.withCluster() {
     openshift.withProject(project) {
@@ -50,7 +51,7 @@ node {
             if (!imageBuildCompleted) {
               error("An error has occured in tf-${operatingSystem}-${pythonVersionNoDecimal}-image-${uuid}")
             }
-          }
+          } //end of stage
 
           // This stage uses the image built previously and runs the s2i/bin/run script to verify Tensorflow
           stage("Build Job") {
@@ -66,7 +67,7 @@ node {
               "-p", "TF_GIT_BRANCH=${tfBranch}"
             )
             def createdJob = openshift.create(buildJob)
-            def jobPods = createdJob.related('pods')
+            jobPods = createdJob.related('pods')
 
             // Check OpenShift to make sure the pod is running before trying to tail the logs
             timeout(5) {
@@ -74,33 +75,34 @@ node {
                 return (it.object().status.phase == "Running")
               }
             }
-            jobPods.logs("-f")
 
             // Check OpenShift to see if the build has Succeeded
-            //def jobSucceeded = false
-            //timeout(5) {
-              //jobPods.untilEach {
-                //if (it.object().status.phase == "Succeeded") {
-                  //jobSucceeded = true
-                //}
-                //return jobSucceeded
-              //}
-            //}
+            def jobSucceeded = false
+            timeout(5) {
+              jobPods.untilEach {
+                if (it.object().status.phase == "Succeeded") {
+                  jobSucceeded = true
+                }
+                return jobSucceeded
+              }
+            }
 
-            // If build is not completed after 1 minuete, we are assuming there was an error
+            // If build is not completed after 1 minute, we are assuming there was an error
             // And throwing to the catch block
-            //if (!jobSucceeded) {
-              //error("An error has occured in tf-${operatingSystem}-${pythonVersionNoDecimal}-job-${uuid}")
-            //}
-          }
+            if (!jobSucceeded) {
+              error("An error has occurred in tf-${operatingSystem}-${pythonVersionNoDecimal}-job-${uuid}")
+            }
+          }//end of stage
         } catch (e) {
           echo e.toString()
           throw e
         } finally {
           // Delete all resources related to the current build
           stage("Cleanup") {
-            //openshift.delete(builderImageStream)
-            //openshift.delete(buildJob)
+            def resultlog = jobPods.logs()
+            echo resultlog.toString()
+            openshift.delete(builderImageStream)
+            openshift.delete(buildJob)
           }
         }
       }
