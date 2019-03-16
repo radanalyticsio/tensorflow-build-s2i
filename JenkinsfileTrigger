@@ -1,0 +1,129 @@
+// Name of project in OpenShift
+def project = "tensorflow"
+
+// Map of OS targets to test Tensorflow with
+// Key: name of os, Value: s2i image registry
+def buildTargets = [
+  "fedora26": "registry.fedoraproject.org/f26/s2i-core",
+  "fedora27": "registry.fedoraproject.org/f27/s2i-core",
+  "fedora28": "registry.fedoraproject.org/f28/s2i-core",
+  "centos7": "openshift/base-centos7"
+]
+
+// list of python versions to be used when testing
+def pythonVersions = ["2.7", "3.5", "3.6"]
+
+// List of templates needed for the build process
+def templates = ["tensorflow-build-image.json", "tensorflow-build-job.json"]
+
+node {
+  try {
+    withCredentials([string(credentialsId: 'tensorflowWebhookToken', variable: 'tensorflowWebhookToken')]) {
+      properties([
+        [$class: 'GithubProjectProperty', displayName: '', projectUrlStr: 'https://github.com/tensorflow/tensorflow/'],
+        pipelineTriggers([
+          [$class: 'GenericTrigger',
+            genericVariables: [
+              [key: 'release_version', value: '$.release.tag_name'],
+            ],
+            genericHeaderVariables: [
+              [key: 'X-GitHub-Event', regexpFilter: '']
+            ],
+            token: tensorflowWebhookToken,
+            regexpFilterText: '$x_github_event',
+            regexpFilterExpression: '^release$'
+          ]
+        ])
+      ])
+    }
+
+    stage("Checkout") {
+      checkout scm
+    }
+
+    stage("Create Templates") {
+      openshift.withCluster() {
+        openshift.withProject(project) {
+          // Loop through templates and make sure they exist in OpenShift
+          templates.each { template ->
+            def templateFileName = template.take(template.lastIndexOf("."))
+            def templateSelector = openshift.selector("template", templateFileName)
+
+            if (!templateSelector.exists()) {
+              openshift.create(readFile(template))
+            } else {
+              openshift.replace(readFile(template))
+            }
+          }
+        }
+      }
+    }
+
+    stage("Tensorflow-Trigger") {
+      def builds = [:]
+
+      // Loop through all the OS targets we will be building
+      buildTargets.each { operatingSystem, s2iImage ->
+        // Loop through the different versions of python we want to test
+        pythonVersions.each { pythonVersion ->
+
+          // Check existance of the jenkins job "tensorflow-${operatingSystem}-${pythonVersion}"
+          if (jenkins.model.Jenkins.instance.getItem("tensorflow-${operatingSystem}-${pythonVersion}") == null) {
+            // Create Job if it does not exists
+            jobDsl  scriptText: createJob(operatingSystem, pythonVersion)
+          }
+
+          // Add Job to map of jobs to be run in parallel
+          builds["tensorflow-${operatingSystem}-${pythonVersion}"] = {
+            // Lock resource so that only a certain number of jobs can run at a time
+            lock(label: "tensorflow_jobs", quantity: 1, variable: "LOCKED") {
+              println "Locked resource: ${env.LOCKED}"
+              // Seed job
+              build job: "tensorflow-${operatingSystem}-${pythonVersion}",
+                parameters: [
+                  string(name: "OPERATING_SYSTEM", value: "${operatingSystem}"),
+                  string(name: "S2I_IMAGE", value: "${s2iImage}"),
+                  string(name: "PYTHON_VERSION", value: "${pythonVersion}"),
+                ]
+            }
+          }
+        }
+      }
+
+      // Run all jobs from map in parallel
+      parallel builds
+    }
+  } catch (e) {
+    echo e.toString()
+    throw e
+  }
+}
+
+// Create job
+// Accepts OS and version of python
+// Will generate job using jobDsl
+def createJob(operatingSystem, pythonVersion) {
+  return """
+    pipelineJob("tensorflow-${operatingSystem}-${pythonVersion}") {
+      parameters {
+        stringParam("BAZEL_VERSION", "", "Version of Bazel for Tensorflow")
+        stringParam("CUSTOM_BUILD", "", "Custom build command for Tensorflow")
+        stringParam("OPERATING_SYSTEM", "", "Which Operating System is the job being built for")
+        stringParam("PYTHON_VERSION", "", "Version of Python to be used in the job")
+        stringParam("S2I_IMAGE", "", "Source 2 Image base image")
+        stringParam("TF_GIT_BRANCH", "", "Tensorflow branch used when checking out code")
+      }
+      definition {
+        cpsScm {
+          scm {
+            git {
+              remote { url("https://github.com/thoth-station/tensorflow-build-s2i") }
+              branch("*/master")
+              extensions { }
+            }
+          }
+        }
+      }
+    }
+  """
+}

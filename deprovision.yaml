@@ -1,0 +1,35 @@
+---
+- name: Playbook to deprovision TensorFlow Builds
+    - openshift
+    - thoth
+
+  hosts: localhost
+  vars:
+    OCP_URL: "{{ lookup('env','OCP_URL') }}"
+    OCP_TOKEN: "{{ lookup('env','OCP_TOKEN') }}"
+    
+    TENSORFLOW_APPLICATION_NAMESPACE: "{{ lookup('env','TENSORFLOW_APPLICATION_NAMESPACE') }}"
+
+  gather_facts: false
+  connection: local
+
+  tasks:
+  - name: login to OpenShift using provided token
+    command: "oc login {{ OCP_URL }} --insecure-skip-tls-verify=true --token {{ OCP_TOKEN }}"
+    changed_when: False
+
+  - name: "deleting Images and Jobs"
+    command: "oc delete  --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE }} all -l appName=tf-{{ item.0 }}-build-{{ item.1 }}-{{ item.2 }}"
+    ignore_errors: true
+    with_nested:
+      - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+      - ['image', 'job']
+      - ['27', '36']
+
+  - name: "deleting secrets"
+    command: "oc delete secret/tf-{{ item.0 }}-build-{{ item.1 }}-{{ item.2 }}-secret --namespace {{ TENSORFLOW_APPLICATION_NAMESPACE }}"
+    ignore_errors: true
+    with_nested:
+      - ['fedora27', 'fedora28', 'centos7', 'rhel75']
+      - ['image', 'job']
+      - ['27', '36']

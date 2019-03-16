@@ -28,6 +28,7 @@ COPY cuda.repo /etc/yum.repos.d/cuda.repo
 ENV CUDA_VERSION 9.2.148
 
 ENV CUDA_PKG_VERSION 9-2-$CUDA_VERSION-1
+RUN yum-config-manager --disable qci-1.1-for-rhel-7-beta-rpms
 RUN yum install -y \
         cuda-cudart-$CUDA_PKG_VERSION && \
     ln -s cuda-9.2 /usr/local/cuda && \
@@ -82,7 +83,7 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH"
 
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.14.1
+ARG BAZEL_VERSION=0.15.0
 ARG NB_PYTHON_VER=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
 ENV PYTHON_VER=$NB_PYTHON_VER
@@ -104,7 +105,7 @@ ENV TINI_VERSION=v0.16.1
 ENV PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VER/site-packages
 ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
-###ENV BAZEL_VERSION 0.11.0
+###ENV BAZEL_VERSION 0.15.0
 ################################################
 ## Tensorflow ./configure options for Bazel
 ################################################
@@ -139,17 +140,25 @@ ENV NCCL_INSTALL_PATH=/usr/local/nccl-2.2
 
 
 
-ADD entrypoint /entrypoint
-ADD build_tools /build_tools
-
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
-    && chmod +x /entrypoint \
     && yum install -y yum-utils \
     && prepare-yum-repositories rhel-server-rhscl-7-rpms \
-    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python27-python-devel && scl enable python27 bash ; fi \
+    && if [ "$PYTHON_VER" = "2.7" ] ; then yum install -y scl-utils python27 python-devel python27-python-devel && scl enable python27 bash ; fi \
     && if [ "$PYTHON_VER" = "3.5" ] ; then yum install -y scl-utils rh-python35 rh-python35-python-pip rh-python35-scldevel && scl enable rh-python35 bash  ; fi \
     && if [ "$PYTHON_VER" = "3.6" ] ; then yum install -y scl-utils rh-python36 rh-python36-python-pip rh-python36-scldevel && scl enable rh-python36 bash  ; fi \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/bin ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/bin ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
     && yum install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
     && yum install -y which findutils x86info cpuid dmidecode procps \
     && yum install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
@@ -157,6 +166,17 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && yum install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && yum install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && yum install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && echo "-----IMAGE_TEST--------" \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
 #########################
 ## taken from runtime
 #########################
@@ -203,6 +223,25 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && if [ "$PYTHON_VER" = "2.7" ] ; then python$PYTHON_VER get-pip.py ; fi \
     && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python35/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH && export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python35/root/usr/bin/python3.5 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python35/root/usr/bin/pip /usr/bin/pip; fi \
     && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/lib64/ && export LD_LIBRARY_PATH="/opt/rh/rh-python36/root/usr/lib64/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && echo $LD_LIBRARY_PATH  && export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages && echo $PYTHON_LIB_PATH && rm -fr /usr/bin/python && ln -s /opt/rh/rh-python36/root/usr/bin/python3.6 /usr/bin/python && ls -l /usr/bin/python* && python get-pip.py && rm -fr /usr/bin/pip && ln -s /opt/rh/rh-python36/root/usr/bin/pip /usr/bin/pip; fi \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then echo "PYTHON_H="`rpm -ql rh-python35-python-devel | grep Python.h` ; fi \
+    && if [ "$PYTHON_VER" = "3.5" ] ; then ls -l /opt/rh/rh-python35/root/usr/include/ && ls -l /opt/rh/rh-python35/root/usr/lib64/ ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then echo "PYTHON_H="`rpm -ql rh-python36-python-devel | grep Python.h` ; fi \
+    && if [ "$PYTHON_VER" = "3.6" ] ; then ls -l /opt/rh/rh-python36/root/usr/include/ && ls -l /opt/rh/rh-python36/root/usr/lib64/ ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
+    && ls -l /usr/bin/python* \
+    && echo "-----IMAGE_TEST--------" \
+    && mkdir -p /home/$NB_USER/.ssh \
+    && echo 'alias ll="ls -l"' >> /home/$NB_USER/.bashrc \
+    && ssh-keyscan pagure.io >> /home/$NB_USER/.ssh/known_hosts \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
@@ -257,6 +296,10 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
+ADD test/ /tmp/test/
+ADD entrypoint /entrypoint
+RUN chmod +x /entrypoint
+ADD build_tools /build_tools
 
 # NO CLEANUP
 # Donot add below commands

@@ -14,10 +14,10 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.11.0
-ARG NB_PYTHON_VER=3.6
+ARG BAZEL_VERSION=0.20.0
+ARG PYTHON_VERSION=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
-ENV NB_PYTHON_VER=$NB_PYTHON_VER
+ENV PYTHON_VERSION=$PYTHON_VERSION
 
 # Not essential, but wise to set the lang
 # Note: Users with other languages should set this in their derivative image
@@ -27,19 +27,18 @@ ENV LC_ALL=""
 ENV PYTHONIOENCODING UTF-8
 ENV NB_USER=default
 ENV NB_UID=1001
-#### ENV NB_PYTHON_VER=DONOT UNCOMMENT
 ENV PYTHON_BIN_PATH=/usr/bin/python
-ENV TINI_VERSION=v0.16.1 
+ENV TINI_VERSION=v0.18.0
 
 ## Bazel
-ENV PYTHON_LIB_PATH=/usr/lib64/python$NB_PYTHON_VER/site-packages
+ENV PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages
 ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
 #### ENV BAZEL_VERSION = DONOT UNCOMMENT
 ################################################
 ## Tensorflow ./configure options for Bazel
 ################################################
-ENV PYTHON_BIN_PATH=/usr/bin/python$NB_PYTHON_VER
+ENV PYTHON_BIN_PATH=/usr/bin/python$PYTHON_VERSION
 ENV CC_OPT_FLAGS -march=native
 ENV TF_NEED_JEMALLOC 1
 ENV TF_NEED_GCP 0
@@ -58,33 +57,90 @@ ENV TF_SET_ANDROID_WORKSPACE 0
 ENV PATH /usr/local/bin:$PATH:/home/default/.local/bin
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
-
-ADD entrypoint /entrypoint
-ADD build_tools /build_tools
-
-
+## Note: after all the dnf install the python link changes to python2
+## that is why we change the /usr/bin/python again
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
-    && chmod +x /entrypoint \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
-    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && if [ "$PYTHON_VERSION" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then ls -l /usr/bin/python ; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then ls -l /usr/bin/python ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VERSION=$PYTHON_VERSION" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
+    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler kmod \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && python$NB_PYTHON_VER get-pip.py \
-    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
-    && dnf install -y which findutils x86info cpuid dmidecode procps \
-    && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
+    && dnf install -y vim gcc gcc-c++ glibc-devel openssl-devel gpg perf \
+    && dnf install -y findutils x86info cpuid dmidecode procps \
+    && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils elfutils-libelf-devel \
     && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
     && dnf install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
-    && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
-    && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
+    && echo "-----IMAGE_TEST--------" \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VERSION=$PYTHON_VERSION" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VERSION" = "2.7" ] ; then python$PYTHON_VERSION get-pip.py ; fi \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then  export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /usr/bin/pip-3 /usr/bin/pip ; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then  export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /usr/bin/pip-3 /usr/bin/pip ; fi \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` ; fi \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then ls -l /usr/include/python3.5m/ | grep Python.h ; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` ; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then ls -l /usr/include/python3.6m/ | grep Python.h ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip_ver="`pip --version` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
+    && echo "PATH=$PATH" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \
+    && echo "PYTHON_VER=$PYTHON_VER" \
+    && ls -l /usr/bin/python* \
+    && echo "-----IMAGE_TEST--------"
+
+
+###&& cd /tmp && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys  595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
+RUN  wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
+    && wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
     && cd /tmp \
-    && gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 0527A9B7 && gpg --verify /tmp/tini.asc \
+    && \
+    TINI_GPGKEY=595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7; \
+    found=''; \
+    for server in \
+        ha.pool.sks-keyservers.net \
+        hkp://keyserver.ubuntu.com:80 \
+        hkp://p80.pool.sks-keyservers.net:80 \
+        pgp.mit.edu \
+    ; do \
+        echo "Fetching GPG key $TINI_GPGKEY from $server"; \
+        gpg --batch --keyserver "$server" --recv-keys "$TINI_GPGKEY" && found=yes && break; \
+    done; \
+    test -z "$found" && echo >&2 "ERROR: failed to fetch GPG key $TINI_GPGKEY" && exit 1; \
+    gpg --batch --verify /tmp/tini.asc /tmp/tini \
     && mv /tmp/tini /usr/local/bin/tini \
     && chmod +x /usr/local/bin/tini \
     && chown -R 1001:1001 /opt/app-root \
@@ -115,7 +171,7 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 RUN mkdir -p /tf \
     && pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -U setuptools \
-    && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow pyyaml \
+    && pip install --no-cache-dir enum34 futures mock numpy six pixiedust pillow pyaml keras \
     && mkdir -p /tf/tools \
     && cd /tf/tools \
     && wget -q https://github.com/bazelbuild/bazel/releases/download/$BAZEL_VERSION/bazel-$BAZEL_VERSION-installer-linux-x86_64.sh \
@@ -127,11 +183,15 @@ RUN mkdir -p /tf \
     && mkdir -p /workspace \
     && chown $NB_UID:root /workspace \
     && chmod 1777 /workspace \
-    && mkdir -p /home/$NB_USER \
+    && mkdir -p /home/$NB_USER/.ssh \
     && chown -R $NB_UID:root /home/$NB_USER \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
+#ADD test/test_tensorflow /test_tensorflow
+ADD entrypoint /entrypoint
+RUN chmod +x /entrypoint
+ADD build_tools /build_tools
 
 # NO CLEANUP
 # Donot add below commands

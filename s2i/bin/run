@@ -11,56 +11,121 @@ set -o pipefail
 
 echo "run...."
 
-### These ENVs should be set for configure.
-echo "TF_NEED_JEMALLOC = "$TF_NEED_JEMALLOC
-echo "TF_NEED_GCP = "$TF_NEED_GCP
-echo "TF_NEED_VERBS = "$TF_NEED_VERBS
-echo "TF_NEED_HDFS = "$TF_NEED_HDFS
-echo "TF_ENABLE_XLA = "$TF_ENABLE_XLA
-echo "TF_NEED_OPENCL = "$TF_NEED_OPENCL
-echo "TF_NEED_CUDA = "$TF_NEED_CUDA
-echo "TF_NEED_MPI = "$TF_NEED_MPI
-echo "TF_NEED_GDR = "$TF_NEED_GDR
-echo "TF_NEED_S3 = "$TF_NEED_S3
-echo "TF_CUDA_VERSION = "$TF_CUDA_VERSION
-echo "TF_CUDA_COMPUTE_CAPABILITIES = "$TF_CUDA_COMPUTE_CAPABILITIES
-echo "TF_CUDNN_VERSION = "$TF_CUDNN_VERSION
-echo "TF_NEED_OPENCL_SYCL= "$TF_NEED_OPENCL_SYCL
-echo "TF_CUDA_CLANG= "$TF_CUDA_CLANG
-echo "GCC_HOST_COMPILER_PATH= "$GCC_HOST_COMPILER_PATH
-echo "CUDA_TOOLKIT_PATH= "$CUDA_TOOLKIT_PATH
-echo "CUDNN_INSTALL_PATH= "$CUDNN_INSTALL_PATH
+command_exists () { type "$1" &> /dev/null ; }
+file_exists () { test -f $1 ; }
+folder_exists () { test -d $1 ; }
+MY_EXIT_1() {  exit 1; }
+MY_RETURN_1() {  return 1; }
+MY_RETURN_0() {  return 0; }
+env_check () {
+  exit_function=MY_RETURN_0;
+  # If exit function is passed as $2 use it.
+  if [[ ! -z "$2" ]];then exit_function=$2 ;fi 
+  if [ $# -eq 0 ];then printf "No arguments supplied. \nUsage:\n env_check \"ENV_NAME\" [\"exit_function\"]\n" && $exit_function;fi
+  param=$1;
+  # The exclamation mark makes param to get the value of the variable with that name.
+  if [[ -z "${!param}" ]];then echo "$1 is undefined" && $exit_function; else echo "$1 = "${!param} ;fi 
+}
+check_oauth_scope() {
+  # check to see if X-OAuth-Scopes has repo
+  curl --silent -i -H "Authorization: token $GIT_TOKEN" https://api.github.com/rate_limit | 
+    grep "X-OAuth-Scopes:" | tr -d ":" | awk -v N=$2 '{print $2}'                                   # Pluck JSON value
+}
 
-### 1.9 tensorflow needs below new configs
-echo "TF_NEED_KAFKA="$TF_NEED_KAFKA
-echo "TF_NEED_OPENCL_SYCL="$TF_NEED_OPENCL_SYCL
-echo "TF_DOWNLOAD_CLANG="$TF_DOWNLOAD_CLANG
-echo "TF_SET_ANDROID_WORKSPACE="$TF_SET_ANDROID_WORKSPACE
+### ENV vars for configure script.
+env_check TF_NEED_JEMALLOC
+env_check TF_NEED_GCP
+env_check TF_NEED_VERBS
+env_check TF_NEED_HDFS
+env_check TF_ENABLE_XLA
+env_check TF_NEED_OPENCL
+env_check TF_NEED_CUDA
+env_check TF_NEED_MPI
+env_check TF_NEED_GDR
+env_check TF_NEED_S3
+env_check TF_CUDA_VERSION
+env_check TF_CUDA_COMPUTE_CAPABILITIES
+env_check TF_CUDNN_VERSION
+env_check TF_NEED_OPENCL_SYCL
+env_check TF_CUDA_CLANG
+env_check GCC_HOST_COMPILER_PATH
+env_check CUDA_TOOLKIT_PATH
+env_check CUDNN_INSTALL_PATH
 
-### These ENVs should be correctly set.
-echo "PATH = "$PATH
-echo "JAVA_HOME = "$JAVA_HOME
-echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH
-echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH
-echo "PYTHON_BIN_PATH ="$PYTHON_BIN_PATH 
+### 1.9 tensorflow needs below new ENVs
+env_check TF_NEED_KAFKA
+env_check TF_NEED_OPENCL_SYCL
+env_check TF_DOWNLOAD_CLANG
+env_check TF_SET_ANDROID_WORKSPACE
+
+
+### 1.12 tensorflow needs below new configs
+env_check TF_NEED_IGNITE
+env_check TF_NEED_ROCM
+
+### These ENVs should be correctly set by Dockerfile.
+env_check PATH MY_EXIT_1
+env_check JAVA_HOME MY_EXIT_1
+env_check PYTHON_LIB_PATH MY_EXIT_1
+env_check LD_LIBRARY_PATH MY_EXIT_1
+env_check PYTHON_BIN_PATH MY_EXIT_1
 
 ### These ENVs are used in build/publish logic
-echo "PORT = "$PORT
-echo "BUILD_OPTS = "$BUILD_OPTS
-echo "CUSTOM_BUILD = "$CUSTOM_BUILD
-echo "TEST_LOOP = "$TEST_LOOP
-echo "TF_GIT_BRANCH = "$TF_GIT_BRANCH
-echo "NB_PYTHON_VER = "$NB_PYTHON_VER
-echo "HOST_ON_HTTP_SERVER ="$HOST_ON_HTTP_SERVER
-echo "TEST_WHEEL_FILE = "$TEST_WHEEL_FILE
-echo "GIT_DEST_REPO = "$GIT_DEST_REPO
+env_check PORT
+env_check BUILD_OPTS
+env_check CUSTOM_BUILD MY_EXIT_1
 
+env_check TEST_LOOP MY_EXIT_1
+env_check TF_GIT_BRANCH MY_EXIT_1
+env_check PYTHON_VERSION MY_EXIT_1
+env_check HOST_ON_HTTP_SERVER MY_EXIT_1
+env_check TEST_WHEEL_FILE MY_EXIT_1
+env_check GIT_RELEASE_REPO MY_EXIT_1
+env_check HOME
+
+OUATH_SCOPE=$(check_oauth_scope)
+env_check OUATH_SCOPE
+echo "============================================"
 
 TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
 	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
 	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
 
 
+BUILD_TOOLS_DIR="/build_tools"
+env_check BUILD_TOOLS_DIR
+#TODO
+#pip list 2>&1 | grep "YAML\|proto\|numpy"
+#echo "PYTHON_LIB_PATH=`$PYTHON_BIN_PATH -c 'import site; print(site.getsitepackages()[0])'`"
+#echo "PYTHONPATH="$PYTHONPATH
+#PYTHON_LIB_PATH="$($PYTHON_BIN_PATH -c 'import sys;for pth in sys.path: print pth)')"
+echo "which_python="`which python`
+echo "link_which_python="`ls -l $(which python) | awk '{print  $9 $10 $11}'`
+echo "link_bin_python="`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`
+echo "which_pip="`which pip`
+echo "which_pip_version="`pip --version `
+echo "which_pip_site="`pip --version |awk '{print $4}' `
+echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
+pip list 2>&1 | grep "YAML\|proto\|numpy\|keras"
+
+
+
+# Naming the directory according to the naming convention
+OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
+for varname in ${!TF_NEED_*}; do
+    if [ "${!varname}" = "1" ]; then
+        WORD=$(echo "${varname//TF_NEED_}" | tr '[:upper:]' '[:lower:]')
+        if [ "$varname" = "TF_NEED_CUDA" ]; then
+                WORD+=$TF_CUDA_VERSION
+        fi
+        FINAL_STR+=$WORD"+"
+    fi
+done
+TENSORFLOW_BUILD_DIR_NAME=$OSVER/${TF_GIT_BRANCH//r}/${FINAL_STR::-1}
+
+
+
+#Dev Mode
 if [[ $TEST_LOOP = "y" ]]
 then
 	echo "####################################"
@@ -75,134 +140,26 @@ then
 fi
 
 
-# The Python conundrum
-# ----------------------------
-#rpm -ql python27-python-devel  | grep Python.h
-#/opt/rh/python27/root/usr/include/python2.7/Python.h
-#rpm -ql python-devel  | grep Python.h
-#/usr/include/python2.7/Python.h
-#rpm -ql rh-python35-scldevel  | grep Python.h 
-# /opt/rh/rh-python35/root/usr/include/python3.5m/Python.h
-#rpm -ql rh-python36-scldevel  | grep Python.h 
-# /opt/rh/rh-python36/root/usr/include/python3.6m/Python.h
-#/opt/rh/python27/root/usr/lib64/
-# scl python
-#https://www.softwarecollections.org/en/scls/rhscl/python27/
-#https://linuxize.com/post/how-to-install-python-3-on-centos-7/
-#
-#
-#python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
-#/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages
-#/usr/lib/python2.7/site-packages
-# 
-#export PYTHON_LIB_PATH=/opt/rh/python27/root/usr/lib/python2.7/site-packages && 
+
+source $BUILD_TOOLS_DIR/python_script.sh
+echo "The Python conundrum.DONE."
 
 
-# only for 2.7 
-#/usr/include/python2.7/
-#/usr/lib64/python2.7
-
-
-# only for 3.6
-# /opt/rh/rh-python36/root/usr/lib/python3.6/site-packages/
-
-OSVER=$(. /etc/os-release;echo $ID)
-echo "OSVER = "$OSVER
-if [ "$NB_PYTHON_VER" = "2.7" ] ; then 
-	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
-		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export LD_LIBRARY_PATH=/usr/include/python2.7/:/usr/lib64:/usr/lib64/python2.7:/opt/rh/python27/root/usr/include:/opt/rh/python27/root/usr/lib64/:/opt/rh/python27/root/usr/include/python2.7/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
-		export LIBRARY_PATH=/opt/rh/python27/root/usr/include/python2.7/:$LIBRARY_PATH &&
-		export PYTHON_INCLUDE_PATH=/opt/rh/python27/root/usr/include/python2.7 &&
-		echo "PYTHON_H="`rpm -ql python27-python-devel | grep Python.h` &&
-		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH ;
-	fi
-	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
-		export PYTHON_INCLUDE_PATH=/usr/include/python2.7/ &&
-		echo "PYTHON_H="`rpm -ql python-devel | grep Python.h` &&
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
-		echo "CPATH ="$CPATH  && 
-		echo "PATH ="$PATH  && 
-		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
-		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH  && 
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
-	fi
-fi
-if [ "$NB_PYTHON_VER" = "3.5" ] ; then 
-	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
-		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export PATH=/opt/rh/rh-python35/root/usr/bin${PATH:+:${PATH}}
-		export LD_LIBRARY_PATH=/opt/rh/rh-python35/root/usr/lib64/:/opt/rh/rh-python35/root/usr/include:/opt/rh/rh-python35/root/usr/include/python3.5m/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
-		export CPATH=/opt/rh/rh-python35/root/usr/include:/opt/rh/rh-python35/root/usr/include/python3.5m:$CPATH &&
-		export LIBRARY_PATH=/opt/rh/rh-python35/root/usr/include:/opt/rh/rh-python35/root/usr/include/python3.5m:$LIBRARY_PATH &&
-		export PYTHON_INCLUDE_PATH=/opt/rh/rh-python35/root/usr/include/python3.5m &&
-		export PYTHON_LIB_PATH=/opt/rh/rh-python35/root/usr/lib/python3.5/site-packages &&
-		export PKG_CONFIG_PATH=/opt/rh/rh-python35/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} &&
-		export XDG_DATA_DIRS="/opt/rh/rh-python35/root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" &&
-		echo "PYTHON_H="`rpm -ql rh-python35-python-devel | grep Python.h` &&
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
-		echo "CPATH ="$CPATH  &&
-		echo "PATH ="$PATH  &&  
-		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
-		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH  && 
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
-	fi
-	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
-		export PYTHON_INCLUDE_PATH=/usr/include/python3.5m/ && 
-		echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` &&
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
-		echo "CPATH ="$CPATH  && 
-		echo "PATH ="$PATH  && 
-		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
-		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH  && 
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
-	fi
-fi 
-if [ "$NB_PYTHON_VER" = "3.6" ] ; then 
-	if [[ "$OSVER" = "rhel" ]] || [[ "$OSVER" = "centos" ]] ; then
-		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export PATH=/opt/rh/rh-python36/root/usr/bin${PATH:+:${PATH}}
-		export LD_LIBRARY_PATH=/opt/rh/rh-python36/root/usr/lib64/:/opt/rh/rh-python36/root/usr/include:/opt/rh/rh-python36/root/usr/include/python3.6m/:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}} &&
-		export CPATH=/opt/rh/rh-python36/root/usr/include:/opt/rh/rh-python36/root/usr/include/python3.6m:$CPATH &&
-		export LIBRARY_PATH=/opt/rh/rh-python36/root/usr/include:/opt/rh/rh-python36/root/usr/include/python3.6m:$LIBRARY_PATH &&
-		export PYTHON_INCLUDE_PATH=/opt/rh/rh-python36/root/usr/include/python3.6m &&
-		export PYTHON_LIB_PATH=/opt/rh/rh-python36/root/usr/lib/python3.6/site-packages &&
-		export PKG_CONFIG_PATH=/opt/rh/rh-python36/root/usr/lib64/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}} &&
-		export XDG_DATA_DIRS="/opt/rh/rh-python36/root/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}" &&
-		echo "PYTHON_H="`rpm -ql rh-python36-python-devel | grep Python.h` &&
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
-		echo "CPATH ="$CPATH  && 
-		echo "PATH ="$PATH  && 
-		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
-		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH  && 
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
-	fi
-	if [[ "$OSVER" = "fedora" ]] ; then
-		echo "$OSVER-$NB_PYTHON_VER"  &&
-		export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && 
-		export PYTHON_INCLUDE_PATH=/usr/include/python3.6m/ && 
-		echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` &&
-		echo "LD_LIBRARY_PATH ="$LD_LIBRARY_PATH  &&
-		echo "CPATH ="$CPATH  && 
-		echo "PATH ="$PATH  && 
-		echo "LIBRARY_PATH ="$LIBRARY_PATH  &&
-		echo "PYTHON_INCLUDE_PATH ="$PYTHON_INCLUDE_PATH  && 
-		echo "PYTHON_LIB_PATH ="$PYTHON_LIB_PATH ;
-	fi
-fi
 
 echo | gcc -E -Wp,-v -
+echo "which_pip_version="`pip --version `
+pip list 2>&1 | grep "YAML\|proto\|numpy\|keras"
+OSVER=$(. /etc/os-release;echo $ID)
+export PATH=$HOME/bin:$PATH
+export JAVA_HOME=$(readlink -f $JAVA_HOME)
+env_check OSVER
+env_check PATH
+env_check JAVA_HOME
+ls -l $JAVA_HOME
 
 
 ### Setup Bazel
 cd /workspace
-command_exists () { type "$1" &> /dev/null ; }
-file_exists () { test -f $1 ; }
-folder_exists () { test -d $1 ; }
 if command_exists bazel ; then 
 	echo "bazel command exists."; 
 else 
@@ -211,27 +168,32 @@ else
 	export PATH=$HOME/bin:$PATH && bazel && echo "PATH = "$PATH ; 
 fi
 
-### git clone tf
+### git clone tf and test
 cd /workspace
 echo "####################################"
 echo "      clone git repo.....       	  "
 echo "####################################"
+#git clone --branch=r1.10 --depth=1 https://github.com/tensorflow/tensorflow.git .
 git clone --branch=$TF_GIT_BRANCH --depth=1 https://github.com/tensorflow/tensorflow.git .
+#echo "${TF_GIT_BRANCH//r}"
+#Python Configuration Error: Invalid python library path: /usr/lib64/python3.6/site-packages
+#/workspace/tensorflow/java/BUILD:73:1: no such package '@local_jdk//': Expected directory at /usr/lib/jvm/java-1.8.0-openjdk-1.8.0* but it does not exist. and referenced by
+# echo "####################################"
+# echo "      test.....       	      "
+# echo "####################################"
+# bazel test -c opt -- //tensorflow/...
 echo "####################################"
 echo "      configure.....       	      "
 echo "####################################"
 ./configure
 
 
-export PATH=$HOME/bin:$PATH
-echo "PATH = "$PATH
+
 
 ###########################
-### 		TODO
+### TODO NO GPU support yet
 ###########################
-### NO GPU support yet
-###########################
-echo "TF_NEED_CUDA = "$TF_NEED_CUDA
+env_check TF_NEED_CUDA
 if [ $TF_NEED_CUDA = "1" ]; then 
 	echo "####################################"
 	echo "      CUDA BUILD TODO.....       	  "
@@ -242,41 +204,34 @@ if [ $TF_NEED_CUDA = "1" ]; then
 	#cd /workspace/serving/
 	#sed -i.bak 's/@org_tensorflow\/\/third_party\/gpus\/crosstool/@local_config_cuda\/\/crosstool:toolchain/g' tools/bazel.rc
 fi 
-
+#--local_resources 4096,4.0,1.0 --verbose_failures
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,3.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --config=cuda --cxxopt="-D_GLIBCXX_USE_CXX11_ABI=0" --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
 #bazel build -c opt --config=cuda --spawn_strategy=standalone --verbose_failures //tensorflow_serving/model_servers:tensorflow_model_server
-
+#bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+#bazel build --copt=-mavx --copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package
+#--copt=-mavx2 --copt=-O2 --copt=-march=haswell --copt=-mfma
+#bazel build --config=mkl -c opt --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mavx512f --copt=-mavx512pf --copt=-mavx512cd --copt=-mavx512er --copt="-DEIGEN_USE_VML" //tensorflow/tools/pip_package:build_pip_package
 ### enable TEST_LOOP only which deployment config and NOT with Jobs. 
-if [[ $TEST_LOOP = "y" ]]
-then
-	echo "####################################"
-	echo "      DEV/TEST MODE.....       	  "
-	echo "####################################"
-    echo "Starting a infinite while loop to debug in console terminal\n"
-    while :
-	do
-		echo "Press [CTRL+C] to stop.."
-		sleep 1
-	done
-fi
+
 
 
 # /workspace/bins is final location of binaries
-# /workspace/bins
-#`/workspace/bins
 echo "####################################"
 echo "      CUSTOM_BUILD.....       	  "
 echo "####################################"
 cd /workspace
 mkdir -p /workspace/bins
-cp /build_tools/*.sh .
-ls -l
-source ./print_build_info.sh && echo "OK" || echo "Failed"
-mv build_info.yaml /workspace/bins/
+rm -fr /workspace/bins/tensorflow*
 
+source $BUILD_TOOLS_DIR/print_build_info.sh || $MY_EXIT_1
+mv build_info.* /workspace/bins/
+
+
+# TODO refator this out to script
+env_check CUSTOM_BUILD
 eval "$CUSTOM_BUILD" 2>&1 | tee -a /workspace/build.log ; test ${PIPESTATUS[0]} -eq 0
 if (( $? )); then
     echo "####################################"
@@ -287,115 +242,44 @@ else
 	echo "      CUSTOM_BUILD  SUCCESS     	  "
 	echo "####################################"
 	if ls -l  bazel-bin/tensorflow/tools/pip_package/build_pip_package; then
-		## bazel build is success
-		## building the wheel file...
-		## cleanup old
-		rm -fr /workspace/bins/tensorflow*
-		bazel-bin/tensorflow/tools/pip_package/build_pip_package /workspace/bins ;
+		## bazel build is success so building the wheel file...
+		PIP_RELEASE_FOLDER="/tmp/build_pip_package-$(date +%Y-%m-%d_%H%M%S)"
+		env_check PIP_RELEASE_FOLDER
+		mkdir -p $PIP_RELEASE_FOLDER
+		bazel-bin/tensorflow/tools/pip_package/build_pip_package $PIP_RELEASE_FOLDER ;
 
 		if [[ $TEST_WHEEL_FILE = "y" ]]
 		then
 			echo "####################################"
 			echo "      Testing wheel file... 	      "
 			echo "####################################"
-		    cd /workspace/bins && mkdir -p /tmp/test_wheel && pwd
-		    ## cleanup old
-		    rm -fr /tmp/test_wheel/tensorflow*
-		    rm -fr /tmp/test_wheel/*.yaml
-		    cp /workspace/bins/*.whl /tmp/test_wheel && cp /workspace/bins/*.yaml /tmp/test_wheel 
-		    cd /tmp/test_wheel && pwd && ls -l 
-		    
-		 
-		    (pip install *.whl --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
-		    if (( $? )); then
-			    echo "####################################"
-				echo "      TEST_WHEEL_FILE  ERROR!!   	  "
-				echo "####################################"
-				echo "Unable to pip install the wheel file."
-			else
-				cd /tmp/test_wheel && pwd && ls -l
-				python -V
-			    (python -c "$TEST_CMD") 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
-			    if (( $? )); then
-				    echo "####################################"
-					echo "      TEST_WHEEL_FILE  ERROR     	  "
-					echo "####################################"
-					echo "Tensorflow TEST_CMD Failed!"
-				else
-				    echo "####################################"
-					echo "      TEST_WHEEL_FILE  SUCCESS      "
-					echo "####################################"
-					echo "Changing METADATA..."
-					{
-						cd /tmp/test_wheel
-						unzip -xvf *.whl |grep METADATA
-						unzip -q *.whl
-						ls -l *.dist-info/
-						echo
-						echo "METADATA..."
-						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA 
-						sed -i "s/Platform.*/Platform: $(cat /etc/redhat-release)\\nKernel: $(uname -or |awk '{print $1;}')/" *.dist-info/METADATA
-						sed -i "s/Author-email:.*/Author-email: smodeel@redhat.com/" *.dist-info/METADATA
-						sed -i "s/Author:.*/Author: Red Hat Inc./" *.dist-info/METADATA
-						
-						DISCLAIMER="$(cat <<-EOF
-						Disclaimer: Following wheel files are created by Red Hat AICoE experimental builds and are without any support.
-						There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-						EOF
-						)"
-						echo "$DISCLAIMER" >> *.dist-info/METADATA
-						cp build_info.yaml *.dist-info/
-						zip -u *.whl *.dist-info/*
-						rm -fr *.dist-info/
-						rm -fr *.data/
-						unzip -q *.whl
-						echo
-						echo "New METADATA..."
-						grep -e "Platform" -e "Author-email"   -e "Author"  -e "Disclaimer" *.dist-info/METADATA
-						ls -l *.dist-info | grep build_info.yaml
-						whlff=$(basename `ls  *.whl` .whl )
-						mv /workspace/bins/*.whl /workspace/bins/$whlff.whl.bkp
-						cp *.whl /workspace/bins/
-						pip uninstall tensorflow -y 
-						pip install /workspace/bins/*.whl --user
-						ls -l /workspace/bins
-						#release
-						echo "####################################"
-						echo "      Releasing...			      "
-						echo "####################################"
-						rm -fr /tmp/release_dir
-						mkdir -p /tmp/release_dir
-						cd /tmp/release_dir/
-						pwd
-						cp /build_tools/*.sh .
-						cp /build_tools/*.py .
-						git clone $GIT_DEST_REPO
-						cp /workspace/bins/build_info.yaml /tmp/release_dir/
-						cp /workspace/bins/*.whl /tmp/release_dir/
-						ls -l
-						whlff=$(basename `ls *.whl`)
-						OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
-						#OSVER=$(cat build_info.yaml | grep -e "OS_VER" | awk '{print $2,$4}' |tr -d " ")
-						RELEASE_NAME=$OSVER/$NB_PYTHON_VER/$TF_GIT_BRANCH
-						cd wheels
-						ls -l
-						if [ $TF_NEED_CUDA = "1" ]; then
-						GIT_TAG="tf-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
-						else
-						GIT_TAG="tf-${TF_GIT_BRANCH}-cpu-$(date +%Y-%m-%d_%H%M%S)"
-						fi
-						NOTES=$(python /tmp/release_dir/utils.py /tmp/release_dir/build_info.yaml)
-						GIT_TOKEN="${GIT_TOKEN}"
-						FILES="../${whlff} ../build_info.yaml"
-						source ../release.sh "${GIT_TAG}" "${RELEASE_NAME}" "${NOTES}" "${GIT_TOKEN}" "${FILES}"
-
-					} | tee -a test_wheel.log 
-				fi
-			fi
-			if ls -l  /tmp/test_wheel/test_wheel.log; then
-				mv /tmp/test_wheel/test_wheel.log /workspace/bins ;
-			fi
-		fi #end test
+		fi
+		#release
+		echo "####################################"
+		echo "      Releasing...			      "
+		echo "####################################"
+		cd $PIP_RELEASE_FOLDER
+		source $BUILD_TOOLS_DIR/change_metadata.sh "$PIP_RELEASE_FOLDER/tensorflow*"  /workspace/bins/
+		cd $PIP_RELEASE_FOLDER
+		BINARY_FILE=$(basename `ls tensorflow*.whl`)
+		env_check BINARY_FILE
+		#[[ $BINARY_FILE =~ .*_serving_api* ]] && TF_FILE_NAME="tensorflow_serving_api" || TF_FILE_NAME="tf-serving"
+		TF_FILE_NAME="tf"
+		OSVER=$(. /etc/os-release;echo $ID$VERSION_ID)
+		RELEASE_NAME=$OSVER/$PYTHON_VERSION/$TF_GIT_BRANCH
+		if [ $TF_NEED_CUDA = "1" ]; then
+			GIT_TAG="$TF_FILE_NAME-${TF_GIT_BRANCH}-gpu-$(date +%Y-%m-%d_%H%M%S)"
+		else
+			GIT_TAG="$TF_FILE_NAME-${TF_GIT_BRANCH}-cpu-$(date +%Y-%m-%d_%H%M%S)"
+		fi
+		RELEASE_NOTES=$(python $BUILD_TOOLS_DIR/utils.py /workspace/bins/build_info.json) 
+		GIT_TOKEN="${GIT_TOKEN}"
+		RELEASE_FILES="$PIP_RELEASE_FOLDER/${BINARY_FILE} /workspace/bins/build_info.yaml /workspace/bins/build_info.json"
+		env_check RELEASE_FILES
+		git clone $GIT_RELEASE_REPO upload-repo
+		ls -l
+		cd upload-repo
+		source $BUILD_TOOLS_DIR/release.sh "${GIT_TAG}" "${TENSORFLOW_BUILD_DIR_NAME}" "${RELEASE_NOTES}" "${GIT_TOKEN}" "${RELEASE_FILES}"
 	fi #end wheel
 fi # end build
 if ls -l  /workspace/build.log; then
@@ -403,21 +287,22 @@ if ls -l  /workspace/build.log; then
 fi
 
 
-### enable HOST_ON_HTTP_SERVER only which deployment config and NOT with Jobs. 
+### enable HOST_ON_HTTP_SERVER only with deploymentConfig(i.e build-dc.json) and NOT with Jobs. 
 if [[ $HOST_ON_HTTP_SERVER = "y" ]]
 then
 	echo "Starting httpserver to host the binary...\n"
     cd /workspace/
-	if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
+	if [[ $PYTHON_VERSION = "2.7" ]] ; then 
 		python -m SimpleHTTPServer $PORT ; 
 	else python -m http.server $PORT ; 
 	fi
 fi
 
-						#source /tmp/release_dir/tf_env_collect.sh
-						#mv tf_env.txt /workspace/bins/
-						#cp /workspace/bins/tf_env.txt /tmp/release_dir/
-
-
-
-
+echo "TF_ENABLE_TEST = "$TF_ENABLE_TEST
+if [ $TF_ENABLE_TEST = "1" ]; then 
+	echo "####################################"
+	echo "      test.....   		       	  "
+	echo "####################################"
+	eval "$CUSTOM_TEST" || echo "TEST FAILED"
+	#bazel test -c opt --local_resources 2048,.5,1.0 -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/... 
+fi

@@ -18,6 +18,11 @@
                     "appTypes": "tensorflow-build-image",
                     "appName": "${APPLICATION_NAME}"
                 }
+            },
+            "spec": {
+                "lookupPolicy": {
+                    "local": true
+                }
             }
         },
         {
@@ -63,8 +68,8 @@
                         },
                         "env": [
                                     {
-                                        "name": "NB_PYTHON_VER",
-                                        "value": "${NB_PYTHON_VER}"
+                                        "name": "PYTHON_VERSION",
+                                        "value": "${PYTHON_VERSION}"
                                     },
                                     {
                                         "name": "BAZEL_VERSION",
@@ -76,17 +81,17 @@
                 "output": {
                     "to": {
                         "kind": "ImageStreamTag",
-                        "name": "${APPLICATION_NAME}:${VERSION}"
+                        "name": "${APPLICATION_NAME}:${BUILD_VERSION}"
                     }
                 },
                 "resources": {
                     "limits": {
-                        "cpu": "6",
+                        "cpu": "4",
                         "memory": "8Gi"
                     },
                     "requests": {
-                        "cpu": "3",
-                        "memory": "4Gi"
+                        "cpu": "4",
+                        "memory": "8Gi"
                     }
                 }
             }
@@ -115,11 +120,11 @@
         {
             "name": "DOCKER_FILE_PATH",
             "description": "Dockerfile.fedora27, Dockerfile.fedora28, Dockerfile.rhel75.",
-            "value": "Dockerfile.fedora27",
+            "value": "Dockerfile.centos7",
             "required": true
         },
         {
-            "name": "NB_PYTHON_VER",
+            "name": "PYTHON_VERSION",
             "description": "Python version 2.7,3.5,3.6 ",
             "value": "3.6",
             "required": true
@@ -127,7 +132,7 @@
         {
             "name": "BAZEL_VERSION",
             "description": "BAZEL_VERSION",
-            "value": "0.11.0",
+            "value": "0.20.0",
             "required": true
         },
         {
@@ -137,7 +142,7 @@
             "required": true
         },
         {
-            "name": "VERSION",
+            "name": "BUILD_VERSION",
             "description": "Version of the build image, i.e docker image tag",
             "value": "latest",
             "required": true

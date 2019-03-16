@@ -1,0 +1,140 @@
+{
+    "kind": "Template",
+    "apiVersion": "v1",
+    "metadata": {
+        "name": "tensorflow-test-job",
+        "annotations": {
+            "description": "Template to create a Job to test tensorflow wheel files.",
+            "tags": "tf-app"
+        }
+    },
+    "objects": [
+        {
+            "kind": "Job",
+            "apiVersion": "batch/v1",
+            "metadata": {
+                "name": "${APPLICATION_NAME}",
+                "labels": {
+                    "appTypes": "tensorflow-test-job",
+                    "appName": "${APPLICATION_NAME}"
+                }
+            },
+            "spec": {
+                "template": {
+                    "metadata": {
+                        "labels": {
+                            "appTypes": "tensorflow-test-job",
+                            "deploymentconfig": "${APPLICATION_NAME}",
+                            "appName": "${APPLICATION_NAME}"
+                        }
+                    },
+                    "spec": {
+                        "containers": [
+                            {
+                                "env": [
+                                    {
+                                        "name": "NVIDIA_VISIBLE_DEVICES",
+                                        "value": "all"
+                                    },
+                                    {
+                                        "name": "NVIDIA_DRIVER_CAPABILITIES",
+                                        "value": "compute,utility"
+                                    },
+                                    {
+                                        "name": "NVIDIA_REQUIRE_CUDA",
+                                        "value": "cuda>=8.0"
+                                    },
+                                    {
+                                        "name": "TEST_LOOP",
+                                        "value": "${TEST_LOOP}"
+                                    },
+                                    {
+                                        "name": "CUSTOM_INSTALL",
+                                        "value": "${CUSTOM_INSTALL}"
+                                    },
+                                    {
+                                        "name": "NEW_WHEEL_FILE",
+                                        "value": "${NEW_WHEEL_FILE}"
+                                    },
+                                    {
+                                        "name": "HOST_ON_HTTP_SERVER",
+                                        "value": "${HOST_ON_HTTP_SERVER}"
+                                    },
+                                    {
+                                        "name": "TF_VERSION",
+                                        "value": "${TF_VERSION}"
+                                    }
+                                ],
+                                "name": "${APPLICATION_NAME}",
+                                "image": "${BUILDER_IMAGESTREAM}",
+                                "command": ["/entrypoint", "/tmp/test/test_tensorflow"],
+                                "securityContext":{
+                                    "privileged":true
+                                },
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "8",
+                                        "memory": "10Gi",
+                                        "nvidia.com/gpu": "1"
+                                    },
+                                    "requests": {
+                                        "cpu": "6",
+                                        "memory": "8Gi",
+                                        "nvidia.com/gpu": "1"
+                                    }
+                                }
+                            }
+                        ],
+						"restartPolicy": "Never"
+                    }
+                }
+            }
+        }
+    ],
+    "parameters": [
+        {
+            "name": "APPLICATION_NAME",
+            "description": "The name of the application.",
+            "value": "tensorflow-test-job",
+            "from": "[a-zA-Z0-9]{10}",
+            "required": true
+        },
+        {
+            "name": "BUILDER_IMAGESTREAM",
+            "description": "tensorflow-build-image-fc27-36:latest, tensorflow-build-image-rhel75-36:2",
+            "value": "",
+            "required": true
+        },
+        {
+            "name": "TEST_LOOP",
+            "description": " while loop",
+            "value": "n",
+            "required": true
+        },
+        {
+            "name": "CUSTOM_INSTALL",
+            "description": " CUSTOM_INSTALL of new wheel file",
+            "value": "y",
+            "required": true
+        },
+        {
+            "name": "NEW_WHEEL_FILE",
+            "description": " new wheel file URL",
+            "value": "",
+            "required": true
+        },
+        {
+            "name": "TF_VERSION",
+            "description": " TF_VERSION",
+            "value": "1.9.0",
+            "required": true
+        },
+        {
+            "name": "HOST_ON_HTTP_SERVER",
+            "description": " HOST_ON_HTTP_SERVER",
+            "value": "n",
+            "required": true
+        }
+    ]
+}
+

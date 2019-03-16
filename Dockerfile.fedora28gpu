@@ -81,10 +81,10 @@ ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64/stubs/:$LD_LIBRARY_PATH"
 
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.14.1
-ARG NB_PYTHON_VER=3.6
+ARG BAZEL_VERSION=0.20.0
+ARG PYTHON_VERSION=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
-ENV NB_PYTHON_VER=$NB_PYTHON_VER
+ENV PYTHON_VERSION=$PYTHON_VERSION
 
 # Not essential, but wise to set the lang
 # Note: Users with other languages should set this in their derivative image
@@ -94,19 +94,18 @@ ENV LC_ALL=""
 ENV PYTHONIOENCODING UTF-8
 ENV NB_USER=default
 ENV NB_UID=1001
-#### ENV NB_PYTHON_VER=DONOT UNCOMMENT
 ENV PYTHON_BIN_PATH=/usr/bin/python
-ENV TINI_VERSION=v0.16.1 
+ENV TINI_VERSION=v0.18.0
 
 ## Bazel
-ENV PYTHON_LIB_PATH=/usr/lib64/python$NB_PYTHON_VER/site-packages
+ENV PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages
 ENV LD_LIBRARY_PATH="/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}";
 ENV BAZELRC /root/.bazelrc
 #### ENV BAZEL_VERSION = DONOT UNCOMMENT
 ################################################
 ## Tensorflow ./configure options for Bazel
 ################################################
-ENV PYTHON_BIN_PATH=/usr/bin/python$NB_PYTHON_VER
+ENV PYTHON_BIN_PATH=/usr/bin/python$PYTHON_VERSION
 ENV CC_OPT_FLAGS -march=native
 ENV TF_NEED_JEMALLOC 1
 ENV TF_NEED_GCP 0
@@ -125,26 +124,34 @@ ENV TF_SET_ANDROID_WORKSPACE 0
 ENV PATH /usr/local/bin:$PATH:/home/default/.local/bin
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
-
-ADD entrypoint /entrypoint
-ADD build_tools /build_tools
-
-
+## Note: after all the dnf install the python link changes to python2
+## that is why we change the /usr/bin/python again
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
-    && chmod +x /entrypoint \
-    && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
-    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler \
+    && if [ "$PYTHON_VERSION" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
+    && dnf install -y tar tree which git curl wget java-headless bzip2 gnupg2 sqlite protobuf-compiler kmod \
+    && echo "-----IMAGE_TEST--------" \
+    && if [ "$PYTHON_VERSION" = "3.5" ] ; then ls -l /usr/bin/python ; fi \
+    && if [ "$PYTHON_VERSION" = "3.6" ] ; then ls -l /usr/bin/python ; fi \
+    && echo "which_python="`which python` \
+    && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
+    && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
+    && echo "which_pip="`which pip` \
+    && echo "which_pip_site="`pip --version |awk '{print $4}'` \
+    && echo "link_which_pip=`ls -l $(which pip) | awk '{print  $9 $10 $11}'`" \
+    && echo "PATH=$PATH" \
+    && echo "PYTHON_VERSION=$PYTHON_VERSION" \
+    && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
+    && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
+    && echo "-----IMAGE_TEST--------" \
     && chgrp -R root /opt \
     && chmod -R a+rwx /opt \
     && chmod a+rw /etc/passwd \
     && curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py" \
-    && python$NB_PYTHON_VER get-pip.py \
-    && dnf install -y gcc gcc-c++ glibc-devel openssl-devel gpg \
-    && dnf install -y which findutils x86info cpuid dmidecode procps \
-    && dnf install -y kernel-devel make automake autoconf swig zip xz unzip libtool binutils \
+    && dnf install -y vim gcc gcc-c++ glibc-devel openssl-devel gpg perf \
+    && dnf install -y findutils x86info cpuid dmidecode procps \
+    && dnf install -y kernel-devel make automake autoconf swig xz zip unzip libtool binutils elfutils-libelf-devel \
     && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
     && dnf install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
     && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
@@ -185,6 +192,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
 	&& mkdir -p /usr/local/cuda-9.2/lib  \
     && ln -s /usr/lib/nccl-2.2/lib/libnccl.so.2 /usr/local/cuda/lib/libnccl.so.2 \
 #########################
+    && mkdir -p /home/$NB_USER/.ssh \
+    && echo 'alias ll="ls -l"' >> /home/$NB_USER/.bashrc \
+    && ssh-keyscan pagure.io >> /home/$NB_USER/.ssh/known_hosts \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
     && cd /tmp \
@@ -236,6 +246,10 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
+ADD test/ /tmp/test/
+ADD entrypoint /entrypoint
+RUN chmod +x /entrypoint
+ADD build_tools /build_tools
 
 # NO CLEANUP
 # Donot add below commands

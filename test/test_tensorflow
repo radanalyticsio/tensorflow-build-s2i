@@ -1,0 +1,160 @@
+#!/bin/bash
+
+echo "TEST Tensorflow wheel...."
+
+
+TEST_CMD="import tensorflow as tf ; a = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[2, 3], name='a') ; \
+	b = tf.constant([1.0, 2.0, 3.0, 4.0, 5.0, 6.0], shape=[3, 2], name='b') ; c = tf.matmul(a, b) ; \
+	sess = tf.Session(config=tf.ConfigProto(log_device_placement=True)) ;print(sess.run(c))"
+
+
+echo "TEST_LOOP=$TEST_LOOP"
+echo "TF_VERSION=$TF_VERSION"
+echo "NB_PYTHON_VER=$NB_PYTHON_VER"
+echo "CUSTOM_INSTALL=$CUSTOM_INSTALL"
+echo "NEW_WHEEL_FILE=$NEW_WHEEL_FILE"
+
+echo "===================================="
+
+echo "PWD="`pwd`
+echo "which_python="`which python`
+echo "link_which_python="`ls -l $(which python) | awk '{print  $9 $10 $11}'`
+echo "link_bin_python="`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`
+echo "which_pip="`which pip`
+echo "which_pip_version="`pip --version `
+echo "which_pip_site="`pip --version |awk '{print $4}' `
+echo "link_which_pip="`ls -l $(which pip) | awk '{print  $9 $10 $11}'`
+echo "PATH=$PATH" 
+echo "PYTHON_VER=$PYTHON_VER" 
+echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" 
+echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" 
+echo "CUDA_HOME=$CUDA_HOME"
+echo "CUDA_PATH=$CUDA_PATH"
+
+echo "===================================="
+
+ls -l /usr/local/cudnn/include/cudnn.h
+ls -l /usr/local/cuda/include/cudnn.h
+ls -l /usr/local/cuda/lib64 
+ls -l /usr/local/cuda/lib64/stubs/libcuda.so 
+ls -l /usr/local/cuda/lib64/stubs/libcuda.so.1 
+
+
+echo "===================================="
+
+
+# pip install matplotlib --user
+# pip install tensorflow==$TF_VERSION --user
+# pip show tensorflow
+# cd /tmp/test
+# python matmul_bench.py --device=cpu --out=times-google.csv
+# pip uninstall tensorflow -y
+echo "===================================="
+
+
+
+
+
+
+
+if [[ $CUSTOM_INSTALL = "y" ]]
+then
+	(pip install $NEW_WHEEL_FILE --user) 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
+	if (( $? )); then
+		echo "####################################"
+		echo "      CUSTOM_INSTALL  ERROR!!   	  "
+		echo "####################################"
+		echo "Unable to pip install the wheel file."
+		exit 1
+	else
+		echo "####################################"
+		echo "      CUSTOM_INSTALL  SUCCESS		  "
+		echo "####################################"
+		pip show tensorflow
+		# cd /tmp/test
+		# python matmul_bench.py --device=cpu --out=times-custom.csv
+		# python graph.py times
+	fi
+fi
+
+echo "===================================="
+
+cat <<EOF > /tmp/check_tf.py
+from __future__ import print_function
+import imp
+import sys
+try:
+	imp.find_module('tensorflow')
+	import tensorflow as tf;
+	print("tf.VERSION = %s" % tf.VERSION)
+	print("tf.GIT_VERSION = %s" % tf.GIT_VERSION)
+	print("tf.COMPILER_VERSION = %s" % tf.GIT_VERSION)
+except ImportError:
+	print("tf.VERSION = ")
+	print("tf.GIT_VERSION = ")
+	print("tf.COMPILER_VERSION = ")
+	
+EOF
+check_tf="$(python /tmp/check_tf.py >&1)"
+check_tf="${check_tf// = /=}"
+
+CHECK_TF=""
+for word in $check_tf
+do
+	IFS='='        # space is set as delimiter
+	read -ra ADDR <<< "$word"    # str is read into an array as tokens separated by IFS
+	CHECK_TF+="\"${ADDR[0]}\": \"${ADDR[1]}\","
+done
+
+echo "CHECK_TF=$CHECK_TF"
+
+echo "===================================="
+
+(python -c "$TEST_CMD") 2>&1 | tee -a test_wheel.log ; test ${PIPESTATUS[0]} -eq 0
+if (( $? )); then
+	echo "####################################"
+	echo "      TEST_WHEEL_FILE  ERROR     	  "
+	echo "####################################"
+	echo "Tensorflow TEST_CMD Failed!"
+	exit 1
+else
+    echo "#####################################"
+	echo "      TEST_WHEEL_FILE  SUCCESS	   "
+	echo "#####################################"
+fi
+
+echo "===================================="
+
+cat test_wheel.log | grep -i "nvidia"
+cat test_wheel.log | grep -i "gpu"
+cat test_wheel.log | grep -i "tesla"
+
+echo "===================================="
+
+### enable TEST_LOOP only which deployment config and NOT with Jobs. 
+if [[ $TEST_LOOP = "y" ]]
+then
+	echo "####################################"
+	echo "      DEV/TEST MODE.....       	  "
+	echo "####################################"
+    echo "Starting a infinite while loop to debug in console terminal\n"
+    while :
+	do
+		echo "Press [CTRL+C] to stop.."
+		sleep 1
+	done
+fi
+
+### enable HOST_ON_HTTP_SERVER only which deployment config and NOT with Jobs. 
+if [[ $HOST_ON_HTTP_SERVER = "y" ]]
+then
+	echo "Starting httpserver to host the binary...\n"
+    cd /tmp/test
+	if [[ $NB_PYTHON_VER = "2.7" ]] ; then 
+		python -m SimpleHTTPServer $PORT ; 
+	else python -m http.server $PORT ; 
+	fi
+fi
+
+echo "end"
+exit 0

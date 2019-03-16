@@ -113,6 +113,10 @@
                                         "value": "${TF_NEED_S3}"
                                     },
                                     {
+                                        "name": "TF_NEED_AWS",
+                                        "value": "${TF_NEED_AWS}"
+                                    },
+                                    {
                                         "name": "TF_NEED_KAFKA",
                                         "value": "${TF_NEED_KAFKA}"
                                     },
@@ -133,12 +137,24 @@
                                         "value": "${TF_NEED_TENSORRT}"
                                     },
                                     {
+                                        "name": "TF_NEED_ROCM",
+                                        "value": "${TF_NEED_ROCM}"
+                                    },
+                                    {
+                                        "name": "TF_NEED_IGNITE",
+                                        "value": "${TF_NEED_IGNITE}"
+                                    },
+                                    {
                                         "name": "NCCL_INSTALL_PATH",
                                         "value": "${NCCL_INSTALL_PATH}"
                                     },
                                     {
-                                        "name": "NB_PYTHON_VER",
-                                        "value": "${NB_PYTHON_VER}"
+                                        "name": "TEST_LOOP",
+                                        "value": "${TEST_LOOP}"
+                                    },
+                                    {
+                                        "name": "PYTHON_VERSION",
+                                        "value": "${PYTHON_VERSION}"
                                     },
                                     {
                                         "name": "BAZEL_VERSION",
@@ -149,16 +165,28 @@
                                         "value": "${TF_GIT_BRANCH}"
                                     },
                                     {
+                                        "name": "HOST_ON_HTTP_SERVER",
+                                        "value": "${HOST_ON_HTTP_SERVER}"
+                                    },
+                                    {
                                         "name": "TEST_WHEEL_FILE",
                                         "value": "${TEST_WHEEL_FILE}"
+                                    },
+                                    {
+                                        "name": "GIT_RELEASE_REPO",
+                                        "value": "${GIT_RELEASE_REPO}"
                                     },
                                     {
                                         "name": "GIT_TOKEN",
                                         "value": "${GIT_TOKEN}"
                                     },
                                     {
-                                        "name": "GIT_DEST_REPO",
-                                        "value": "${GIT_DEST_REPO}"
+                                        "name": "CUSTOM_TEST",
+                                        "value": "${CUSTOM_TEST}"
+                                    },
+                                    {
+                                        "name": "TF_ENABLE_TEST",
+                                        "value": "${TF_ENABLE_TEST}"
                                     }
                                 ],
                                 "name": "${APPLICATION_NAME}",
@@ -166,12 +194,12 @@
                                 "command": ["/entrypoint", "/usr/libexec/s2i/run"],
                                 "resources": {
                                     "limits": {
-                                        "cpu": "6",
-                                        "memory": "8Gi"
+                                        "cpu": "8",
+                                        "memory": "10Gi"
                                     },
                                     "requests": {
-                                        "cpu": "3",
-                                        "memory": "6Gi"
+                                        "cpu": "6",
+                                        "memory": "8Gi"
                                     }
                                 }
                             }
@@ -199,7 +227,7 @@
         {
             "name": "CUSTOM_BUILD",
             "description": "Set to custom BUILD command",
-            "value": "bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package",
+            "value": "bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package",
             "required": false
         },
         {
@@ -317,6 +345,12 @@
             "required": true
         },
         {
+            "name": "TF_NEED_AWS",
+            "description": "TF_NEED_AWS",
+            "value": "0",
+            "required": true
+        },
+        {
             "name": "TF_NEED_KAFKA",
             "description": "TF_NEED_KAFKA",
             "value": "0",
@@ -347,6 +381,18 @@
             "required": true
         },
         {
+            "name": "TF_NEED_IGNITE",
+            "description": "TF_NEED_IGNITE",
+            "value": "0",
+            "required": true
+        },
+        {
+            "name": "TF_NEED_ROCM",
+            "description": "TF_NEED_ROCM",
+            "value": "0",
+            "required": true
+        },
+        {
             "name": "NCCL_INSTALL_PATH",
             "description": "/usr/local/nccl-2.2",
             "value": "/usr/local/nccl-2.2",
@@ -359,7 +405,7 @@
             "required": true
         },
         {
-            "name": "NB_PYTHON_VER",
+            "name": "PYTHON_VERSION",
             "description": "Python version 2.7,3.5,3.6 .",
             "value": "3.6",
             "required": true
@@ -367,7 +413,7 @@
         {
             "name": "BAZEL_VERSION",
             "description": "BAZEL_VERSION",
-            "value": "0.11.0",
+            "value": "0.15.0",
             "required": true
         },
         {
@@ -377,15 +423,51 @@
             "required": true
         },
         {
+            "name": "HOST_ON_HTTP_SERVER",
+            "description": "USE ONLY with DeploymentConfig.(y or n)If y then http server.",
+            "value": "n",
+            "required": true
+        },
+        {
+            "name": "PORT",
+            "description": "USE ONLY with DeploymentConfig.http server port.",
+            "value": "8080",
+            "required": true
+        },
+        {
+            "name": "TEST_WHEEL_FILE",
+            "description": "(y or n)To run a simple test code to test wheel file.",
+            "value": "y",
+            "required": true
+        },
+        {
             "name": "GIT_TOKEN",
-            "description": "GIT_TOKEN",
+            "description": "GIT_TOKEN value is required if you release to github",
             "value": "",
             "required": true
         },
         {
-            "name": "GIT_DEST_REPO",
-            "description": "GIT_DEST_REPO",
-            "value": "https://github.com/AICoE/wheels.git",
+            "name": "GIT_RELEASE_REPO",
+            "description": "GIT_RELEASE_REPO",
+            "value": "https://github.com/AICoE/tensorflow-wheels.git",
+            "required": true
+        },
+        {
+            "name": "TEST_LOOP",
+            "description": "USE ONLY with DeploymentConfig.(y or n).If y then start a while loop.If y then http won't start.",
+            "value": "n",
+            "required": true
+        },
+        {
+            "name": "CUSTOM_TEST",
+            "description": "CUSTOM_TEST",
+            "value": "bazel test -c opt --local_resources 2048,.5,1.0 -- //tensorflow/... -//tensorflow/compiler/... -//tensorflow/contrib/lite/... ",
+            "required": true
+        },
+        {
+            "name": "TF_ENABLE_TEST",
+            "description": "TF_ENABLE_TEST",
+            "value": "0",
             "required": true
         }
     ]

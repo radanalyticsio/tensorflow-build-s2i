@@ -14,7 +14,7 @@ LABEL io.k8s.description="S2I builder for Tensorflow binaries." \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
 
 # DONOT uncomment. uncomment for dev.
-ARG BAZEL_VERSION=0.11.0
+ARG BAZEL_VERSION=0.15.0
 ARG NB_PYTHON_VER=3.6
 ENV BAZEL_VERSION=$BAZEL_VERSION
 ENV NB_PYTHON_VER=$NB_PYTHON_VER
@@ -59,12 +59,7 @@ ENV PATH /usr/local/bin:$PATH":/home/default/.local/bin
 ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 
 
-ADD entrypoint /entrypoint
-ADD build_tools /build_tools
-
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
-	&& grep -vIr "\x00" -- /build_tools/ \
-    && chmod +x /entrypoint \
     && if [ "$NB_PYTHON_VER" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
     && if [ "$NB_PYTHON_VER" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
     && if [ "$NB_PYTHON_VER" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
@@ -79,6 +74,9 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && dnf install -y kernel-devel make automake autoconf swig zip unzip libtool binutils \
     && dnf install -y freetype-devel libpng12-devel zlib-devel giflib-devel zeromq-devel \
     && dnf install -y libxml2 libxml2-devel libxslt libxslt-devel gzip \
+    && mkdir -p /home/$NB_USER/.ssh \
+    && echo 'alias ll="ls -l"' >> /home/$NB_USER/.bashrc \
+    && ssh-keyscan pagure.io >> /home/$NB_USER/.ssh/known_hosts \
     && dnf install -y java-1.8.0-openjdk java-1.8.0-openjdk-devel patch gdb file pciutils cmake \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget -q https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
@@ -131,6 +129,10 @@ RUN mkdir -p /tf \
     && chmod g+rwX,o+rX -R /home/$NB_USER
 
 COPY ./s2i/bin/ /usr/libexec/s2i
+ADD test/ /tmp/test/
+ADD entrypoint /entrypoint
+RUN chmod +x /entrypoint
+ADD build_tools /build_tools
 
 # NO CLEANUP
 # Donot add below commands

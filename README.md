@@ -21,14 +21,15 @@ This is because
 
 For example:
 
-```--copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 ```
+```--copt=-mavx --copt=-mavx2 --copt=-mavx512f --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2 ```
 
 using above options in `CUSTOM_BUILD` will build the package with optimizations for `FMA, AVX and SSE`.
 
 Build and install from source is fraught with errors due to `gcc` compatability issues, mismatch between CUDA platform and cuDNN libraries with TensorFlow, `python` versions, `bazel` versions , unsupported optimizations on the target CPU etc.
 
 The templates and Dockerfiles available here provide a flexible approach to create wheel files for different combinations of OS, `python` version, `bazel` version etc by specifying them as PARAMS(`--param=`) in the templates. 
-The wheel files created from these templates are available at [AICoE/wheels](https://github.com/AICoE/wheels/releases).
+The wheel files created from these templates are available at [AICoE/tensorflow-wheels](https://github.com/AICoE/tensorflow-wheels/releases).
+And the instructions to use with pipfile are given here [AICoE's TensorFlow Artifacts](https://index-aicoe.a3c1.starter-us-west-1.openshiftapps.com/).
 
 ##### For GPU: TODO
 GPU is not yet supported.
@@ -58,9 +59,11 @@ GPU is not yet supported.
 * `TF_NEED_OPENCL_SYCL`:=0
 * `TF_DOWNLOAD_CLANG`:=0
 * `TF_SET_ANDROID_WORKSPACE`:=0
+* `TF_NEED_IGNITE`:=0
+* `TF_NEED_ROCM`:=0
 
 Here is the default build command used to build tensorflow. 
-* `CUSTOM_BUILD`:=`bazel build -c opt --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package`
+* `CUSTOM_BUILD`:=`bazel build --copt=-mavx --copt=-mavx2 --copt=-mfma --copt=-mfpmath=both --copt=-msse4.2  --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --cxxopt='-D_GLIBCXX_USE_CXX11_ABI=0' --local_resources 2048,2.0,1.0 --verbose_failures //tensorflow/tools/pip_package:build_pip_package`
 
 Following should be left blank for a build job.
 * `TEST_LOOP`:=
@@ -74,18 +77,12 @@ Following should be left blank for a build job.
 
 *set some environment values for convenience*
 ```
-# valid values are 27,36,35
-PYTH_VERSION_SHORT=36
-
 # valid values are 2.7,3.6,3.5
-PYTH_VERSION=3.6
-
-# internal registry of openshift
-REGISTRYY=docker-registry.default.svc:5000/<namespace>
+PYTHON_VERSION=3.6
 
 # git token and repo
 export GIT_TOKEN=
-export GIT_DEST_REPO=
+export GIT_RELEASE_REPO=
 ```
 
 #### 1. Create the templates
@@ -97,27 +94,27 @@ oc create -f tensorflow-build-dc.json
 
 #### 2. Create Tensorflow build image
 ```
-oc new-app --template=tensorflow-build-image  
---param=APPLICATION_NAME=tf-rhel75-build-image-36 \
+oc new-app --template=tensorflow-build-image \
+--param=APPLICATION_NAME=tf-rhel75-build-image-${PYTHON_VERSION//.} \
 --param=S2I_IMAGE=registry.access.redhat.com/rhscl/s2i-core-rhel7  \
 --param=DOCKER_FILE_PATH=Dockerfile.rhel75  \
---param=NB_PYTHON_VER=$PYTH_VERSION \
---param=VERSION=2 \
---param=BAZEL_VERSION=0.11.0
+--param=PYTHON_VERSION=$PYTHON_VERSION \
+--param=BUILD_VERSION=2 \
+--param=BAZEL_VERSION=0.22.0
 ```
-The above command creates a tensorflow builder image `APPLICATION_NAME:VERSION` for specific OS.
+The above command creates a tensorflow builder image `APPLICATION_NAME:BUILD_VERSION` for specific OS.
 
 The values for `S2I_IMAGE` are :
 - Fedora26- `registry.fedoraproject.org/f26/s2i-core`
 - Fedora27- `registry.fedoraproject.org/f27/s2i-core`
-- Fedora27- `registry.fedoraproject.org/f28/s2i-core`
+- Fedora28- `registry.fedoraproject.org/f28/s2i-core`
 - RHEL7.5- `registry.access.redhat.com/rhscl/s2i-core-rhel7`
 - Centos7- `openshift/base-centos7`
 
 The values for `DOCKER_FILE_PATH` are :
-- Fedora26- `Dockerfile.fedora27`
+- Fedora26- `Dockerfile.fedora26`
 - Fedora27- `Dockerfile.fedora27`
-- Fedora27- `Dockerfile.fedora27`
+- Fedora28- `Dockerfile.fedora28`
 - RHEL7.5- `Dockerfile.rhel75`
 - Centos7- `Dockerfile.centos7`
 
@@ -130,34 +127,32 @@ And then deploy from UI with appropriate values.
 #### 3. Create Tensorflow wheel for CPU using the build image
 
 ```
-oc new-app --template=tensorflow-build-job  
---param=APPLICATION_NAME=tf-rhel75-build-job-36 \
---param=BUILDER_IMAGESTREAM=$REGISTRYY/tf-rhel75-build-image-36:2  \
---param=NB_PYTHON_VER=$PYTH_VERSION  \
---param=BAZEL_VERSION=0.11.0 \
---param=GIT_DEST_REPO=$GIT_DEST_REPO  \
+oc new-app --template=tensorflow-build-job  \
+--param=APPLICATION_NAME=tf-rhel75-build-job-${PYTHON_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTHON_VERSION//.}:2  \
+--param=PYTHON_VERSION=$PYTHON_VERSION  \
+--param=BAZEL_VERSION=0.22.0 \
+--param=GIT_RELEASE_REPO=$GIT_RELEASE_REPO  \
 --param=GIT_TOKEN=$GIT_TOKEN
 ```
-NOTE: `BUILDER_IMAGESTREAM = $REGISTRYY/APPLICATION_NAME:VERSION` from step 2.
+NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:BUILD_VERSION` from step 2.
 
 *OR*
 
 Import the template `tensorflow-build-job.json` into your namespace from Openshift UI.
 And then deploy from UI with appropriate values.
-Tensorflow wheel files will be pushed to `$GIT_DEST_REPO` using the token `$GIT_TOKEN`.
+Tensorflow wheel files will be pushed to `$GIT_RELEASE_REPO` using the token `$GIT_TOKEN`.
 (NOTE: This will ONLY work if the oauth token has scope of "repo".
 You can generate Personal API access token at https://github.com/settings/tokens. Minimal token scope is "repo".)
 
 ### To create a DEV environment for debugging build issues :
 ```
-oc new-app --template=tensorflow-build-dc  
---param=APPLICATION_NAME=tf-rhel75-build-dc-36 \
---param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-36:2  \
---param=NB_PYTHON_VER=$PYTH_VERSION  \
---param=GIT_TOKEN=$GIT_TOKEN \
+oc new-app --template=tensorflow-build-dc  \
+--param=APPLICATION_NAME=tf-rhel75-build-dc-${PYTHON_VERSION//.} \
+--param=BUILDER_IMAGESTREAM=tf-rhel75-build-image-${PYTHON_VERSION//.}:2  \
+--param=PYTHON_VERSION=$PYTHON_VERSION  \
 --param=TEST_LOOP=y
-
 ```
-NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:VERSION` from step 2. 
+NOTE: `BUILDER_IMAGESTREAM = APPLICATION_NAME:BUILD_VERSION` from step 2. 
 
 See [Usage example](https://github.com/thoth-station/tensorflow-build-s2i/blob/master/Developing.md)

@@ -1,5 +1,5 @@
 
-FROM registry.fedoraproject.org/f27/s2i-core
+FROM registry.fedoraproject.org/f29/s2i-core
 
 MAINTAINER Subin Modeel <smodeel@redhat.com>
 
@@ -61,11 +61,9 @@ ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk-1.8.0*
 ## that is why we change the /usr/bin/python again
 RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && if [ "$PYTHON_VERSION" = "2.7" ] ; then yum install -y python27 python-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python ; fi \
-    && if [ "$PYTHON_VERSION" = "3.5" ] ; then yum install -y python35 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python; fi \
-    && if [ "$PYTHON_VERSION" = "3.6" ] ; then yum install -y python36 python3-devel && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python; fi \
+    && if [[ $PYTHON_VERSION == 3.* ]] ; then yum install -y python${PYTHON_VERSION//.} python3-devel python3-setuptools python3-pip python3-virtualenv && rm -fr /usr/bin/python && ln -s /usr/bin/python${PYTHON_VERSION} /usr/bin/python; fi \
     && echo "-----IMAGE_TEST--------" \
-    && if [ "$PYTHON_VERSION" = "3.5" ] ; then ls -l /usr/bin/python ; fi \
-    && if [ "$PYTHON_VERSION" = "3.6" ] ; then ls -l /usr/bin/python ; fi \
+    && if [[ $PYTHON_VERSION == 3.* ]] ; then ls -l /usr/bin/python ; fi \
     && echo "which_python="`which python` \
     && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
@@ -101,13 +99,10 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \ 
     && echo "-----IMAGE_TEST--------" \
     && if [ "$PYTHON_VERSION" = "2.7" ] ; then python$PYTHON_VERSION get-pip.py ; fi \
-    && if [ "$PYTHON_VERSION" = "3.5" ] ; then  export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages && rm -fr /usr/bin/python && ln -s /usr/bin/python3.5 /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /usr/bin/pip-3 /usr/bin/pip ; fi \
-    && if [ "$PYTHON_VERSION" = "3.6" ] ; then  export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages && rm -fr /usr/bin/python && ln -s /usr/bin/python3.6 /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /usr/bin/pip-3 /usr/bin/pip ; fi \
+    && if [[ $PYTHON_VERSION == 3.* ]] ; then  export LD_LIBRARY_PATH="/usr/lib64:/usr/local/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}" && export PYTHON_LIB_PATH=/usr/lib64/python$PYTHON_VERSION/site-packages && rm -fr /usr/bin/python && ln -s /usr/bin/python$PYTHON_VERSION /usr/bin/python && python get-pip.py && rm -fr /usr/bin/pip && ln -s /usr/bin/pip-3 /usr/bin/pip ; fi \
     && echo "-----IMAGE_TEST--------" \
-    && if [ "$PYTHON_VERSION" = "3.5" ] ; then echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` ; fi \
-    && if [ "$PYTHON_VERSION" = "3.5" ] ; then ls -l /usr/include/python3.5m/ | grep Python.h ; fi \
-    && if [ "$PYTHON_VERSION" = "3.6" ] ; then echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` ; fi \
-    && if [ "$PYTHON_VERSION" = "3.6" ] ; then ls -l /usr/include/python3.6m/ | grep Python.h ; fi \
+    && if [[ $PYTHON_VERSION == 3.* ]] ; then echo "PYTHON_H="`rpm -ql python3-devel | grep Python.h` ; fi \
+    && if [[ $PYTHON_VERSION == 3.* ]] ; then ls -l /usr/include/python${PYTHON_VERSION}m/ | grep Python.h ; fi \
     && echo "which_python="`which python` \
     && echo "link_which_python=`ls -l $(which python) | awk '{print  $9 $10 $11}'`" \
     && echo "link_bin_python=`ls -l /usr/bin/python |awk '{print  $9 $10 $11}'`" \
@@ -118,15 +113,28 @@ RUN echo 'PS1="\u@\h:\w\\$ \[$(tput sgr0)\]"' >> /root/.bashrc \
     && echo "PATH=$PATH" \
     && echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH" \
     && echo "PYTHON_LIB_PATH=$PYTHON_LIB_PATH" \
-    && echo "PYTHON_VER=$PYTHON_VER" \
+    && echo "PYTHON_VERSION=$PYTHON_VERSION" \
     && ls -l /usr/bin/python* \
     && echo "-----IMAGE_TEST--------"
 
 
 RUN  wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini -P /tmp \
     && wget https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini.asc -P /tmp \
-    && cd /tmp && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7 \
-    && gpg --batch --verify /tmp/tini.asc /tmp/tini  \
+    && cd /tmp \
+    && \
+    TINI_GPGKEY=595E85A6B1B4779EA4DAAEC70B588DFF0527A9B7; \
+    found=''; \
+    for server in \
+        ha.pool.sks-keyservers.net \
+        hkp://keyserver.ubuntu.com:80 \
+        hkp://p80.pool.sks-keyservers.net:80 \
+        pgp.mit.edu \
+    ; do \
+        echo "Fetching GPG key $TINI_GPGKEY from $server"; \
+        gpg --batch --keyserver "$server" --recv-keys "$TINI_GPGKEY" && found=yes && break; \
+    done; \
+    test -z "$found" && echo >&2 "ERROR: failed to fetch GPG key $TINI_GPGKEY" && exit 1; \
+    gpg --batch --verify /tmp/tini.asc /tmp/tini \
     && mv /tmp/tini /usr/local/bin/tini \
     && chmod +x /usr/local/bin/tini \
     && chown -R 1001:1001 /opt/app-root \

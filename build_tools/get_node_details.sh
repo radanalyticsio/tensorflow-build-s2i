@@ -13,16 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # =============================================================================
-
-# Print build info, including info related to the machine, OS, build tools
-# and TensorFlow source code. This can be used by build tools such as Jenkins.
-# All info is printed on a single line, in JSON format, to workaround the
-# limitation of Jenkins Description Setter Plugin that multi-line regex is
-# not supported.
+# Print node info, including info related to the machine
 #
 # Usage:
 #   should be run within tensorflow workspace
 #	should run only after tensorflow wheel file is created
+
 
 # Information about the command
 COMMAND=("$@")
@@ -34,7 +30,6 @@ KERNEL=$(uname -r)
 ARCH=$(uname -p)
 PROCESSOR=$(grep "model name" /proc/cpuinfo | head -1 | awk '{print substr($0, index($0, $4))}')
 PROCESSOR_COUNT=$(grep "model name" /proc/cpuinfo | wc -l)
-
 MEM_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print $2, $3}')
 SWAP_TOTAL=$(grep SwapTotal /proc/meminfo | awk '{print $2, $3}')
 
@@ -42,52 +37,26 @@ command_exists () { type "$1" &> /dev/null ; }
 file_exists () { test -f $1 ; }
 folder_exists () { test -d $1 ; }
 
-# Information about build tools
-if command_exists bazel; then
-  BAZEL_VER=$(bazel version | head -1)
-fi
-
 if command_exists ldd; then
   GLIBC_VER=$(ldd --version | head -1)
 fi
 
+if command_exists hostname; then
+  HOSTNAME=$(hostname)
+  HOST_IP=$(hostname --ip-address)
+fi
+
+
 if file_exists /etc/redhat-release; then
   OS_VER=$(cat /etc/redhat-release)
-fi
-
-if command_exists pip; then
-  PIP_VER=$(pip -V | head -1)
-fi
-
-if command_exists protoc; then
-  PROTOC_VER=$(protoc --version | head -1)
 fi
 
 if command_exists gcc; then
   GCC_VER=$(gcc --version | head -1)
 fi
 
-if command_exists javac; then
-  JAVA_VER=$(javac -version 2>&1 | awk '{print $2}')
-fi
-
-if command_exists python; then
-  PYTHON_VER=$(python -V 2>&1 | awk '{print $2}')
-fi
-
 if command_exists g++; then
   GPP_VER=$(g++ --version | head -1)
-fi
-
-if command_exists swig; then
-  SWIG_VER=$(swig -version > /dev/null | grep -m 1 . | awk '{print $3}')
-fi
-
-# Information about TensorFlow source
-
-if folder_exists .git ; then
-	TF_FETCH_URL=$(git config --get remote.origin.url)
-	TF_HEAD=$(git rev-parse HEAD)
 fi
 
 # NVIDIA & CUDA info
@@ -109,64 +78,12 @@ if command_exists nvcc; then
   CUDA_TOOLKIT_VER=$(nvcc -V | grep release | awk '{print $(NF)}')
 fi
 
-cat <<EOF > /tmp/check_tf.py
-from __future__ import print_function
-import imp
-import sys
-try:
-	imp.find_module('tensorflow')
-	import tensorflow as tf;
-	print("tf.VERSION = %s" % tf.VERSION)
-	print("tf.GIT_VERSION = %s" % tf.GIT_VERSION)
-	print("tf.COMPILER_VERSION = %s" % tf.GIT_VERSION)
-except ImportError:
-	print("tf.VERSION = ")
-	print("tf.GIT_VERSION = ")
-	print("tf.COMPILER_VERSION = ")
-	
-EOF
-check_tf="$(python /tmp/check_tf.py >&1)"
-check_tf="${check_tf// = /=}"
 
-CHECK_TF=""
-for word in $check_tf
-do
-	IFS='='        # space is set as delimiter
-	read -ra ADDR <<< "$word"    # str is read into an array as tokens separated by IFS
-	CHECK_TF+="\"${ADDR[0]}\": \"${ADDR[1]}\","
-done
-
-
-
-BUILD_ENVs+="\"GCC_HOST_COMPILER_PATH\": \"${GCC_HOST_COMPILER_PATH}\","
-BUILD_ENVs+="\"CUDA_TOOLKIT_PATH\": \"${CUDA_TOOLKIT_PATH}\","
-BUILD_ENVs+="\"CUDNN_INSTALL_PATH\": \"${CUDNN_INSTALL_PATH}\","
-BUILD_ENVs+="\"JAVA_HOME\": \"${JAVA_HOME}\","
-BUILD_ENVs+="\"PYTHON_LIB_PATH\": \"${PYTHON_LIB_PATH}\","
-BUILD_ENVs+="\"LD_LIBRARY_PATH\": \"${LD_LIBRARY_PATH}\","
-BUILD_ENVs+="\"PYTHON_BIN_PATH\": \"${PYTHON_BIN_PATH}\","
-BUILD_ENVs+="\"PATH\": \"${PATH}\","
-BUILD_ENVs+="\"PORT\": \"${PORT}\","
-BUILD_ENVs+="\"BUILD_OPTS\": \"${BUILD_OPTS}\","
-BUILD_ENVs+="\"PYTHON_VERSION\": \"${PYTHON_VERSION}\","
-BUILD_ENVs+="\"HOST_ON_HTTP_SERVER\": \"${HOST_ON_HTTP_SERVER}\","
-BUILD_ENVs+="\"TEST_WHEEL_FILE\": \"${TEST_WHEEL_FILE}\"," 
-BUILD_ENVs+="\"GIT_RELEASE_REPO\": \"${GIT_RELEASE_REPO}\","
-BUILD_ENVs+="\"CUSTOM_BUILD\": \"${CUSTOM_BUILD}\","
-
-
-unset IFS
-TF_ENVs=""
-TF_ENVs=$(env -0  | while IFS='=' read -r -d '' n v; do
-	if [[ $n == TF* ]]; then
-    	echo -e "\"$n\": \"$v\","
-	fi;
-done)
-
-A=$(gcc -march=native -Q --help=target|grep march)
-ARCH=$(echo "${A##* }" | tr -s [:space:] | sed -e 's/^\s*//' -e '/^$/d')
-
-GCC_FLAGSS=$(gcc -### -E - -march=native 2>&1 | sed -r '/cc1/!d;s/(")|(^.* - )|( -mno-[^\ ]+)//g')
+if command_exists gcc; then
+  A=$(gcc -march=native -Q --help=target|grep march)
+  ARCH=$(echo "${A##* }" | tr -s [:space:] | sed -e 's/^\s*//' -e '/^$/d')
+  GCC_FLAGSS=$(gcc -### -E - -march=native 2>&1 | sed -r '/cc1/!d;s/(")|(^.* - )|( -mno-[^\ ]+)//g')
+fi
 
 CPUINFO_FLAGS=$(grep flags -m1 /proc/cpuinfo | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]')
 
@@ -182,27 +99,23 @@ LOGICAL_CPUS=$(grep processor /proc/cpuinfo | wc -l)
 CORES_PER_PCPU=$(grep cpu.cores /proc/cpuinfo | sort -u | cut -d ":" -f 2 | tr '[:upper:]' '[:lower:]')
 PHYSICAL_CPUS=$(grep physical.id /proc/cpuinfo | sort -u | wc -l)
 
+
 # Print info
-TF_BUILD_INFO="{
-\"source_HEAD\": \""${TF_HEAD}"\", 
-\"source_remote_origin\": \""${TF_FETCH_URL}"\", 
+TF_NODE_INFO="{
 \"OS_VER\": \""${OS_VER}"\", 
 \"GLIBC_VER\": \""${GLIBC_VER}"\", 
-\"PIP_VER\": \""${PIP_VER}"\", 
-\"PROTOC_VER\": \""${PROTOC_VER}"\",
+\"GCC_VER\": \""${GCC_VER}"\", 
+\"OS\": \""${OS}"\", 
 \"LOGICAL_CPUS\": \""${LOGICAL_CPUS}"\", 
 \"CORES_PER_PCPU\": \""${CORES_PER_PCPU}"\", 
 \"PHYSICAL_CPUS\": \""${PHYSICAL_CPUS}"\", 
-\"GCC_VER\": \""${GCC_VER}"\", 
-\"OS\": \""${OS}"\", 
 \"kernel\": \""${KERNEL}"\", 
+\"HOSTNAME\": \""${HOSTNAME}"\", 
+\"HOST_IP\": \""${HOST_IP}"\", 
 \"architecture\": \""${ARCH}"\", 
 \"processor\": \""${PROCESSOR}"\", 
-\"Bazel_version\": \""${BAZEL_VER}"\", 
-\"Java_version\": \""${JAVA_VER}"\", 
-\"Python_version\": \""${PYTHON_VER}"\",
 \"gpp_version\": \""${GPP_VER}"\", 
-\"swig_version\": \""${SWIG_VER}"\", 
+\"processor_count\": \""${PROCESSOR_COUNT}"\",
 \"NVIDIA_driver_version\": \""${NVIDIA_DRIVER_VER}"\",
 \"CUDA_device_count\": \""${CUDA_DEVICE_COUNT}"\",
 \"CUDA_device_names\": \""${CUDA_DEVICE_NAMES}"\",
@@ -212,20 +125,25 @@ TF_BUILD_INFO="{
 \"CPUINFO_FLAGS_TENSORFLOW\": \""${CPUINFO_FLAGS_TENSORFLOW}"\",
 \"CPU_FAMILY\": \""${CPU_FAMILY}"\",
 \"CPU_MODEL\": \""${CPU_MODEL}"\",
-"${BUILD_ENVs}"
-"${TF_ENVs}"
 \"march\": \""${ARCH}"\"
 }"
 
-echo -e $TF_BUILD_INFO
+#echo -e $TF_NODE_INFO
 echo
-#\"processor_count\": \""${PROCESSOR_COUNT}"\", 
-#\"memory_total\": \""${MEM_TOTAL}"\", 
-#\"swap_total\": \""${SWAP_TOTAL}"\", 
-#pip install pyyaml  
-rm -fr build_info.*
-echo -e $TF_BUILD_INFO >> build_info.json
-echo -e  $TF_BUILD_INFO | python -c 'import yaml,json,sys;obj=json.load(sys.stdin);yy=yaml.safe_dump(obj, default_flow_style=False)
-print(yy)' >> build_info.yaml
+rm -fr node_info_${HOST_IP}.yaml
+rm -fr node_info_${HOST_IP}.json
+if command_exists pip; then
+      pip install pyyaml --user
+      echo -e  $TF_NODE_INFO | python -c 'import yaml,json,sys;obj=json.load(sys.stdin);yy=yaml.safe_dump(obj, default_flow_style=False); print(yy)' >> node_info_${HOST_IP}.yaml
+      echo "----------------------"
+      cat node_info_${HOST_IP}.yaml
+      echo "----------------------"
+ fi
+echo -e  $TF_NODE_INFO >> node_info_${HOST_IP}.json
+cat node_info_${HOST_IP}.json
+
+
+
+
 
 
