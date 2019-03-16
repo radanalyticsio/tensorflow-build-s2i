@@ -45,6 +45,8 @@ Build-Image
 oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-fedora27-build-image-${PYTHON_VERSION//.}-13 --param=S2I_IMAGE=registry.fedoraproject.org/f27/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora27 --param=PYTHON_VERSION=$PYTHON_VERSION --param=BUILD_VERSION=1 --param=BAZEL_VERSION=0.18.0
 
 
+oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-fedora29-build-image-${PYTHON_VERSION//.}-13  --param=S2I_IMAGE=registry.fedoraproject.org/f28/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora29 --param=PYTHON_VERSION=$PYTHON_VERSION --param=BUILD_VERSION=1 --param=BAZEL_VERSION=0.22.0
+
 oc new-app --template=tensorflow-build-image  --param=APPLICATION_NAME=tf-fedora28-build-image-${PYTHON_VERSION//.}-13  --param=S2I_IMAGE=registry.fedoraproject.org/f28/s2i-core   --param=DOCKER_FILE_PATH=Dockerfile.fedora28 --param=PYTHON_VERSION=$PYTHON_VERSION --param=BUILD_VERSION=1 --param=BAZEL_VERSION=0.18.0
 
 
